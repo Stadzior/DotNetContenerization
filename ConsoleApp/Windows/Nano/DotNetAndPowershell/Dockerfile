@@ -63,8 +63,8 @@ COPY --from=installer ["/dotnet", "/Program Files/dotnet"]
 COPY --from=installer ["/powershell", "/Program Files/powershell"]
 
 # Copy files
-COPY Windows/Nano/DotNetAndPowershell/Program.cs C:/app/Program.cs
-COPY Windows/Nano/DotNetAndPowershell/ConsoleApp.csproj C:/app/ConsoleApp.csproj
+COPY Program.cs C:/app/Program.cs
+COPY ConsoleApp.csproj C:/app/ConsoleApp.csproj
 
 # Publish
 RUN dotnet publish C:\app\ConsoleApp.csproj -c release -r win-x64 --no-self-contained

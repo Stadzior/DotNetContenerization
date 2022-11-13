@@ -36,8 +36,8 @@ RUN wget -O dotnet.tar.gz https://dotnetcli.azureedge.net/dotnet/Sdk/$DOTNET_SDK
     && dotnet help
 
 # Copy files
-COPY ../../../Program.cs /usr/app/Program.cs
-COPY ../../../ConsoleApp.csproj /usr/app/ConsoleApp.csproj
+COPY Program.cs /usr/app/Program.cs
+COPY ConsoleApp.csproj /usr/app/ConsoleApp.csproj
 
 # Publish
 RUN dotnet publish /usr/app/ConsoleApp.csproj -c release -r linux-x64 --no-self-contained
