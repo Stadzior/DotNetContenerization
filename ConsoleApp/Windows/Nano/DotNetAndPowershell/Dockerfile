@@ -1,11 +1,11 @@
 # Installer image
-FROM mcr.microsoft.com/windows/servercore:ltsc2022-amd64 AS installer
+FROM mcr.microsoft.com/windows/servercore:20H2 AS installer
 
 RUN powershell -Command " \
         $ErrorActionPreference = 'Stop'; \
         $ProgressPreference = 'SilentlyContinue'; \
         # Retrieve .NET SDK
-        $sdk_version = '6.0.403'; \
+        $sdk_version = '6.0.402'; \
         Invoke-WebRequest -OutFile dotnet.zip https://dotnetcli.azureedge.net/dotnet/Sdk/$sdk_version/dotnet-sdk-$sdk_version-win-x64.zip; \
         $dotnet_sha512 = '609217ef0e1baecc250db94cf0a0255301220d8f6a443424c0bd912b07c1fdaa5eef89b28907a70e05bee5b76c4792afdbf3e5399dc609a41c05319e523b96dd'; \
         if ((Get-FileHash dotnet.zip -Algorithm sha512).Hash -ne $dotnet_sha512) { \
@@ -22,7 +22,7 @@ RUN powershell -Command " \
         if ((Get-FileHash PowerShell.Windows.x64.$powershell_version.nupkg -Algorithm sha512).Hash -ne $powershell_sha512) { \
             Write-Host 'CHECKSUM VERIFICATION FAILED!'; \
             exit 1; \
-        }; \
+        };  \
         & \dotnet\dotnet tool install --add-source . --tool-path \powershell --version $powershell_version PowerShell.Windows.x64; \
         & \dotnet\dotnet nuget locals all --clear; \
         Remove-Item -Force PowerShell.Windows.x64.$powershell_version.nupkg; \
@@ -33,10 +33,12 @@ RUN powershell -Command " \
         Get-ChildItem -Exclude 'LICENSE.txt','ThirdPartyNotices.txt','packs','sdk','sdk-manifests','templates','shared' -Path dotnet \
             | Remove-Item -Force -Recurse; \
         Get-ChildItem -Exclude 'Microsoft.WindowsDesktop.App' -Path dotnet\shared \
-            | Remove-Item -Force -Recurse" 
+            | Remove-Item -Force -Recurse"
 
-# SDK image
-FROM mcr.microsoft.com/dotnet/aspnet:6.0.10-nanoserver-ltsc2022
+FROM mcr.microsoft.com/dotnet/aspnet:6.0.10-nanoserver-1809
+
+LABEL purpose=workshops
+LABEL apptype=ConsoleApp
 
 ENV \
     # Unset ASPNETCORE_URLS from aspnet base image
@@ -50,24 +52,22 @@ ENV \
     # Enable correct mode for dotnet watch (only mode supported in a container)
     DOTNET_USE_POLLING_FILE_WATCHER=true \
     # Skip extraction of XML docs - generally not useful within an image/container - helps performance
-    NUGET_XMLDOC_MODE=skip \
-    # PowerShell telemetry for docker image usage
-    POWERSHELL_DISTRIBUTION_CHANNEL=PSDocker-DotnetSDK-NanoServer-ltsc2022 
+    NUGET_XMLDOC_MODE=skip
 
-# Copy files
-COPY --from=installer ["/dotnet", "/Program Files/dotnet"]
-COPY --from=installer ["/powershell", "/Program Files/powershell"]
-COPY ../../../Program.cs C:\app\Program.cs
-COPY ../../../ConsoleApp.csproj C:\app\ConsoleApp.csproj
-
-# In order to set system PATH, ContainerAdministrator must be used
+# Install dotnet sdk
 USER ContainerAdministrator
-
-# Publish
-RUN setx /M PATH "%PATH%;C:\Program Files\powershell;C:\Program Files\MinGit\cmd" \
-    "dotnet publish C:\app\ConsoleApp.csproj -c release -r win-x64 --no-self-contained"
-
+RUN setx /M PATH "%PATH%;C:\Program Files\powershell;C:\Program Files\MinGit\cmd"
 USER ContainerUser
 
+COPY --from=installer ["/dotnet", "/Program Files/dotnet"]
+COPY --from=installer ["/powershell", "/Program Files/powershell"]
+
+# Copy files
+COPY Windows/Nano/DotNetAndPowershell/Program.cs C:/app/Program.cs
+COPY Windows/Nano/DotNetAndPowershell/ConsoleApp.csproj C:/app/ConsoleApp.csproj
+
+# Publish
+RUN dotnet publish C:\app\ConsoleApp.csproj -c release -r win-x64 --no-self-contained
+
 # Run app
-ENTRYPOINT ["dotnet", "C:\app\bin\release\net6.0\win-x64\publish\ConsoleApp.dll"]
+ENTRYPOINT ["C:/app/bin/release/net6.0/win-x64/publish/ConsoleApp.exe"]
