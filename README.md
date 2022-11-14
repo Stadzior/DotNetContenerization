@@ -76,18 +76,18 @@ cd [PATH_TO_REPO]/MinimalApi/Linux/Alpine/DotNetAndPowerShell
 docker image build -t alpine-dotnet-minimalapi:1 -f Dockerfile .
 docker container run -dit -p 5001:5000 --name alpine-dotnet-minimalapi-1 alpine-dotnet-minimalapi:1
 ```
-- Alpine linux with self-contained dotnetapp (dotnet must be installed in host) **679MB** [DRAFT]:
+- Alpine linux with self-contained dotnetapp (dotnet must be installed in host) **700MB**:
 ```
 cd [PATH_TO_REPO]/MinimalApi/Linux/Alpine/SelfContained
 dotnet publish MinimalApi.csproj -c release -r linux-x64 --self-contained
 docker image build -t alpine-dotnet-minimalapi:2 -f Dockerfile .
 docker container run -dit -p 5001:5000 --name alpine-dotnet-minimalapi-2 alpine-dotnet-minimalapi:2
 ```
-- Alpine linux slim **25.9MB** [DRAFT]:
+- Alpine linux slim **268.5MB**]:
 ```
 cd [PATH_TO_REPO]/MinimalApi/Linux/Alpine/Slim
 docker image build -t alpine-dotnet-minimalapi:3 -f Dockerfile .
-docker container run -dit -p 5001:5000 --name alpine-dotnet-minimalapi-3 alpine-dotnet-minimalapi:3
+docker container run -dit -p 5001:80 --name alpine-dotnet-minimalapi-3 alpine-dotnet-minimalapi:3
 ```
 - Windows Nano with dotnet & powershell **0B(!?)** [DRAFT]:
 ```

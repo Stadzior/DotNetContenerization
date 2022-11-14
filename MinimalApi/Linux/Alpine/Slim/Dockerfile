@@ -3,9 +3,13 @@
 FROM mcr.microsoft.com/dotnet/sdk:6.0-alpine AS build
 
 LABEL purpose=workshops
-LABEL apptype=ConsoleApp
+LABEL apptype=MinimalApi
 
 WORKDIR /source
+
+ENV \
+    # Ensure we listen on any IP Address 
+    DOTNET_URLS=http://+:80
 
 # copy csproj and restore as distinct layers
 COPY *.csproj .
@@ -20,5 +24,5 @@ FROM mcr.microsoft.com/dotnet/runtime-deps:6.0.11-alpine3.16-amd64
 WORKDIR /app
 COPY --from=build /app .
 
-ENTRYPOINT ["./ConsoleApp"]
+ENTRYPOINT ["./MinimalApi"]
 
