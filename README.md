@@ -17,6 +17,12 @@ dotnet publish ConsoleApp.csproj -c release -r linux-x64 --self-contained
 docker image build -t alpine-dotnet-consoleapp:2 -f Dockerfile .
 docker container run -dit --name alpine-dotnet-consoleapp-2 alpine-dotnet-consoleapp:2
 ```
+- Alpine linux slim **25.9MB**:
+```
+cd [PATH_TO_REPO]/ConsoleApp/Linux/Alpine/Slim
+docker image build -t alpine-dotnet-consoleapp:3 -f Dockerfile .
+docker container run -dit --name alpine-dotnet-consoleapp-3 alpine-dotnet-consoleapp:3
+```
 - Windows Nano with dotnet & powershell **0B(!?)**:
 ```
 cd [PATH_TO_REPO]/ConsoleApp/Windows/Nano/DotNetAndPowerShell
@@ -29,6 +35,12 @@ cd [PATH_TO_REPO]/ConsoleApp/Windows/Nano/SelfContained
 dotnet publish ConsoleApp.csproj -c release -r win-x64 --self-contained
 docker image build -t nano-dotnet-consoleapp:2 -f Dockerfile .
 docker container run -dit --name nano-dotnet-consoleapp-2 nano-dotnet-consoleapp:2
+```
+- Windows Nano slim **0B(!?)**:
+```
+cd [PATH_TO_REPO]/ConsoleApp/Windows/Nano/Slim
+docker image build -t nano-dotnet-consoleapp:3 -f Dockerfile .
+docker container run -dit --name nano-dotnet-consoleapp-3 nano-dotnet-consoleapp:3
 ```
 - Windows Server Core with dotnet & powershell **0B(!?)**:
 ```
@@ -43,6 +55,12 @@ dotnet publish ConsoleApp.csproj -c release -r win-x64 --self-contained
 docker image build -t core-dotnet-consoleapp:2 -f Dockerfile .
 docker container run -dit --name core-dotnet-consoleapp-2 core-dotnet-consoleapp:2
 ```
+- Windows Server Core slim **0B(!?)**:
+```
+cd [PATH_TO_REPO]/ConsoleApp/Windows/ServerCore/Slim
+docker image build -t core-dotnet-consoleapp:3 -f Dockerfile .
+docker container run -dit --name core-dotnet-consoleapp-3 core-dotnet-consoleapp:3
+```
 
 # Minimal WebApi
 
@@ -51,5 +69,3 @@ docker container run -dit --name core-dotnet-consoleapp-2 core-dotnet-consoleapp
 # ASP.NET
 
 # Blazor
-
-# RabbitMQ
