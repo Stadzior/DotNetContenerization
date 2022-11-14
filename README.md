@@ -7,8 +7,8 @@ Created images:
 - Alpine linux with dotnet & powershell **1.05GB**:
 ```
 cd [PATH_TO_REPO]/ConsoleApp/Linux/Alpine/DotNetAndPowerShell
-docker image build -t alpine-dotnet-consoleapp -f Dockerfile .
-docker container run -dit --name alpine-dotnet-consoleapp-1 alpine-dotnet-consoleapp
+docker image build -t alpine-dotnet-consoleapp:1 -f Dockerfile .
+docker container run -dit --name alpine-dotnet-consoleapp-1 alpine-dotnet-consoleapp:1
 ```
 - Alpine linux with self-contained dotnetapp (dotnet & powershell must be installed in host) **679MB**:
 ```
@@ -20,8 +20,8 @@ docker container run -dit --name alpine-dotnet-consoleapp-2 alpine-dotnet-consol
 - Windows Nano with dotnet & powershell **0B(!?)**:
 ```
 cd [PATH_TO_REPO]/ConsoleApp/Windows/Nano/DotNetAndPowerShell
-docker image build -t nano-dotnet-consoleapp -f Dockerfile .
-docker container run -dit --name nano-dotnet-consoleapp-1 nano-dotnet-consoleapp
+docker image build -t nano-dotnet-consoleapp:1 -f Dockerfile .
+docker container run -dit --name nano-dotnet-consoleapp-1 nano-dotnet-consoleapp:1
 ```
 - Windows Nano with self-contained dotnetapp **0B(!?)**:
 ```
@@ -29,6 +29,19 @@ cd [PATH_TO_REPO]/ConsoleApp/Windows/Nano/SelfContained
 dotnet publish ConsoleApp.csproj -c release -r win-x64 --self-contained
 docker image build -t nano-dotnet-consoleapp:2 -f Dockerfile .
 docker container run -dit --name nano-dotnet-consoleapp-2 nano-dotnet-consoleapp:2
+```
+- Windows Server Core with dotnet & powershell **0B(!?)**:
+```
+cd [PATH_TO_REPO]/ConsoleApp/Windows/ServerCore/DotNetAndPowerShell
+docker image build -t core-dotnet-consoleapp:1 -f Dockerfile .
+docker container run -dit --name core-dotnet-consoleapp-1 core-dotnet-consoleapp:1
+```
+- Windows Server Core with self-contained dotnetapp **0B(!?)**:
+```
+cd [PATH_TO_REPO]/ConsoleApp/Windows/ServerCore/SelfContained
+dotnet publish ConsoleApp.csproj -c release -r win-x64 --self-contained
+docker image build -t core-dotnet-consoleapp:2 -f Dockerfile .
+docker container run -dit --name core-dotnet-consoleapp-2 core-dotnet-consoleapp:2
 ```
 
 # Minimal WebApi
