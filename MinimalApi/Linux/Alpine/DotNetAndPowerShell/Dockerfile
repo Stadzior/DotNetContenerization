@@ -6,6 +6,8 @@ LABEL apptype=MinimalApi
 ENV \
     # Unset ASPNETCORE_URLS from aspnet base image
     ASPNETCORE_URLS= \
+    # Ensure we listen on any IP Address 
+    DOTNET_URLS=http://+:5000 \
     # Do not generate certificate
     DOTNET_GENERATE_ASPNET_CERTIFICATE=false \
     # Do not show first run text

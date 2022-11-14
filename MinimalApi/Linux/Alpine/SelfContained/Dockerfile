@@ -22,12 +22,13 @@ ENV \
     POWERSHELL_DISTRIBUTION_CHANNEL=PSDocker-DotnetSDK-Alpine-3.16
 
 # Copy files
-COPY bin/release/net6.0/linux-x64/publish /usr/app
+WORKDIR /app
+COPY bin/release/net6.0/linux-x64/publish .
 
 # Publish
-RUN chmod +x /usr/app/ConsoleApp.dll && \
+RUN chmod +x ./MinimalApi.dll && \
     # https://stackoverflow.com/questions/66963068/docker-alpine-executable-binary-not-found-even-if-in-path
     apk add gcompat
     
 # Run app
-ENTRYPOINT ["./usr/app/ConsoleApp"]
+ENTRYPOINT ["./ConsoleApp"]
