@@ -1,11 +1,13 @@
 FROM mcr.microsoft.com/windows/servercore:20H2
 
 LABEL purpose=workshops
-LABEL apptype=ConsoleApp
+LABEL apptype=MinimalApi
 
 ENV \
     # Unset ASPNETCORE_URLS from aspnet base image
     ASPNETCORE_URLS= \
+    # Ensure we listen on any IP Address 
+    DOTNET_URLS=http://+:5000 \
     # Do not generate certificate
     DOTNET_GENERATE_ASPNET_CERTIFICATE=false \
     # Do not show first run text
@@ -39,11 +41,11 @@ RUN powershell -Command " \
         [Environment]::SetEnvironmentVariable('Path', $Path, 'Machine')"
 
 # Copy files
-COPY Program.cs C:/app/Program.cs
-COPY ConsoleApp.csproj C:/app/ConsoleApp.csproj
+WORKDIR /app
+COPY . .
 
 # Publish
-RUN powershell -Command "dotnet publish C:\app\ConsoleApp.csproj -c release -r win-x64 --no-self-contained"
+RUN powershell -Command "dotnet publish MinimalApi.csproj -c release -r win-x64 --no-self-contained"
 
 # Run app
-ENTRYPOINT ["dotnet", "C:/app/bin/release/net6.0/win-x64/publish/ConsoleApp.dll"]
+ENTRYPOINT ["dotnet", "bin/release/net6.0/win-x64/publish/MinimalApi.dll"]

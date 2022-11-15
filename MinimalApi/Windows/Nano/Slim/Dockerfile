@@ -3,10 +3,14 @@
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 
 LABEL purpose=workshops
-LABEL apptype=ConsoleApp
+LABEL apptype=MinimalApi
 
 WORKDIR /source
 
+ENV \
+    # Ensure we listen on any IP Address 
+    DOTNET_URLS=http://+:80
+    
 # copy csproj and restore as distinct layers
 COPY *.csproj .
 RUN dotnet restore -r win-x64 /p:PublishReadyToRun=true
@@ -23,4 +27,4 @@ COPY --from=build /app .
 # Enable detection of running in a container
 ENV DOTNET_RUNNING_IN_CONTAINER=true
 
-ENTRYPOINT ["ConsoleApp"]
+ENTRYPOINT ["MinimalApi"]

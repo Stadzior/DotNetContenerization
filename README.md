@@ -66,7 +66,7 @@ docker container run -dit --name core-dotnet-consoleapp-3 core-dotnet-consoleapp
 
 # Minimal WebApi
 Simple minimal web api which responses to simple GET request with "Running!" string.
-Test if it runs by sending a GET request on `localhost:5000`
+Test if it runs by sending a GET request on `localhost:5001`
 
 ### Created images:
 
@@ -83,45 +83,45 @@ dotnet publish MinimalApi.csproj -c release -r linux-x64 --self-contained
 docker image build -t alpine-dotnet-minimalapi:2 -f Dockerfile .
 docker container run -dit -p 5001:5000 --name alpine-dotnet-minimalapi-2 alpine-dotnet-minimalapi:2
 ```
-- Alpine linux slim **268.5MB**]:
+- Alpine linux slim **268.5MB**:
 ```
 cd [PATH_TO_REPO]/MinimalApi/Linux/Alpine/Slim
 docker image build -t alpine-dotnet-minimalapi:3 -f Dockerfile .
 docker container run -dit -p 5001:80 --name alpine-dotnet-minimalapi-3 alpine-dotnet-minimalapi:3
 ```
-- Windows Nano with dotnet & powershell **0B(!?)** [DRAFT]:
+- Windows Nano with dotnet & powershell **0B(!?)**:
 ```
 cd [PATH_TO_REPO]/MinimalApi/Windows/Nano/DotNetAndPowerShell
 docker image build -t nano-dotnet-minimalapi:1 -f Dockerfile .
 docker container run -dit -p 5001:5000 --name nano-dotnet-minimalapi-1 nano-dotnet-minimalapi:1
 ```
-- Windows Nano with self-contained dotnetapp (dotnet must be installed in host) **0B(!?)** [DRAFT]:
+- Windows Nano with self-contained dotnetapp (dotnet must be installed in host) **0B(!?)**:
 ```
 cd [PATH_TO_REPO]/MinimalApi/Windows/Nano/SelfContained
 dotnet publish MinimalApi.csproj -c release -r win-x64 --self-contained
 docker image build -t nano-dotnet-minimalapi:2 -f Dockerfile .
 docker container run -dit -p 5001:5000 --name nano-dotnet-minimalapi-2 nano-dotnet-minimalapi:2
 ```
-- Windows Nano slim **0B(!?)** [DRAFT]:
+- Windows Nano slim **0B(!?)**:
 ```
 cd [PATH_TO_REPO]/MinimalApi/Windows/Nano/Slim
 docker image build -t nano-dotnet-minimalapi:3 -f Dockerfile .
-docker container run -dit -p 5001:5000 --name nano-dotnet-minimalapi-3 nano-dotnet-minimalapi:3
+docker container run -dit -p 5001:80 --name nano-dotnet-minimalapi-3 nano-dotnet-minimalapi:3
 ```
-- Windows Server Core with dotnet & powershell **0B(!?)** [DRAFT]:
+- Windows Server Core with dotnet & powershell **0B(!?)**:
 ```
 cd [PATH_TO_REPO]/MinimalApi/Windows/ServerCore/DotNetAndPowerShell
 docker image build -t core-dotnet-minimalapi:1 -f Dockerfile .
 docker container run -dit -p 5001:5000 --name core-dotnet-minimalapi-1 core-dotnet-minimalapi:1
 ```
-- Windows Server Core with self-contained dotnetapp (dotnet must be installed in host) **0B(!?)** [DRAFT]:
+- Windows Server Core with self-contained dotnetapp (dotnet must be installed in host) **0B(!?)**:
 ```
 cd [PATH_TO_REPO]/MinimalApi/Windows/ServerCore/SelfContained
 dotnet publish MinimalApi.csproj -c release -r win-x64 --self-contained
 docker image build -t core-dotnet-minimalapi:2 -f Dockerfile .
 docker container run -dit -p 5001:5000 --name core-dotnet-minimalapi-2 core-dotnet-minimalapi:2
 ```
-- Windows Server Core slim **0B(!?)** [DRAFT]:
+- Windows Server Core slim **0B(!?)**:
 ```
 cd [PATH_TO_REPO]/MinimalApi/Windows/ServerCore/Slim
 docker image build -t core-dotnet-minimalapi:3 -f Dockerfile .
@@ -129,7 +129,5 @@ docker container run -dit -p 5001:5000 --name core-dotnet-minimalapi-3 core-dotn
 ```
 
 # Windows Service
-
-# ASP.NET
 
 # Blazor

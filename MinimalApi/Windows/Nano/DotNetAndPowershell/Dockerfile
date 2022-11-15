@@ -38,11 +38,13 @@ RUN powershell -Command " \
 FROM mcr.microsoft.com/dotnet/aspnet:6.0.10-nanoserver-1809
 
 LABEL purpose=workshops
-LABEL apptype=ConsoleApp
+LABEL apptype=MinimalApi
 
 ENV \
     # Unset ASPNETCORE_URLS from aspnet base image
     ASPNETCORE_URLS= \
+    # Ensure we listen on any IP Address 
+    DOTNET_URLS=http://+:5000 \
     # Do not generate certificate
     DOTNET_GENERATE_ASPNET_CERTIFICATE=false \
     # Do not show first run text
@@ -63,11 +65,11 @@ COPY --from=installer ["/dotnet", "/Program Files/dotnet"]
 COPY --from=installer ["/powershell", "/Program Files/powershell"]
 
 # Copy files
-COPY Program.cs C:/app/Program.cs
-COPY ConsoleApp.csproj C:/app/ConsoleApp.csproj
+WORKDIR /app
+COPY . .
 
 # Publish
-RUN dotnet publish C:\app\ConsoleApp.csproj -c release -r win-x64 --no-self-contained
+RUN dotnet publish MinimalApi.csproj -c release -r win-x64 --no-self-contained
 
 # Run app
-ENTRYPOINT ["C:/app/bin/release/net6.0/win-x64/publish/ConsoleApp.exe"]
+ENTRYPOINT ["C:/app/bin/release/net6.0/win-x64/publish/MinimalApi.exe"]
