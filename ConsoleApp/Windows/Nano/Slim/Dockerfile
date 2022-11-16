@@ -3,6 +3,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 
 LABEL purpose=workshops
+LABEL case=stats
 LABEL apptype=ConsoleApp
 
 WORKDIR /source
@@ -17,6 +18,11 @@ RUN dotnet publish -c Release -o /app -r win-x64 --self-contained true --no-rest
 
 # final stage/image
 FROM mcr.microsoft.com/dotnet/aspnet:6.0.10-nanoserver-1809
+
+LABEL purpose=workshops
+LABEL case=stats
+LABEL apptype=ConsoleApp
+
 WORKDIR /app
 COPY --from=build /app .
 

@@ -1,6 +1,7 @@
 FROM mcr.microsoft.com/windows/servercore:20H2
 
 LABEL purpose=workshops
+LABEL case=stats
 LABEL apptype=ConsoleApp
 
 # Copy files

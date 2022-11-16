@@ -1,0 +1,64 @@
+# Installer image
+FROM mcr.microsoft.com/windows/servercore:20H2 AS installer
+
+LABEL purpose=workshops
+LABEL case=stats
+LABEL apptype=WindowsService
+
+RUN powershell -Command " \
+        $ErrorActionPreference = 'Stop'; \
+        $ProgressPreference = 'SilentlyContinue'; \
+        # Retrieve .NET SDK
+        $sdk_version = '6.0.402'; \
+        Invoke-WebRequest -OutFile dotnet.zip https://dotnetcli.azureedge.net/dotnet/Sdk/$sdk_version/dotnet-sdk-$sdk_version-win-x64.zip; \
+        $dotnet_sha512 = '609217ef0e1baecc250db94cf0a0255301220d8f6a443424c0bd912b07c1fdaa5eef89b28907a70e05bee5b76c4792afdbf3e5399dc609a41c05319e523b96dd'; \
+        if ((Get-FileHash dotnet.zip -Algorithm sha512).Hash -ne $dotnet_sha512) { \
+            Write-Host 'CHECKSUM VERIFICATION FAILED!'; \
+            exit 1; \
+        }; \
+        mkdir dotnet; \
+        tar -oxzf dotnet.zip -C dotnet; \
+        Remove-Item -Force dotnet.zip; \
+        # Install PowerShell global tool
+        $powershell_version = '7.2.7'; \
+        Invoke-WebRequest -OutFile PowerShell.Windows.x64.$powershell_version.nupkg https://pwshtool.blob.core.windows.net/tool/$powershell_version/PowerShell.Windows.x64.$powershell_version.nupkg; \
+        $powershell_sha512 = '3b3ce6c307169fa73b8a3120c851ebe0614ebba7b4099fbf20954eb4e41556ef686828317fed56f5995ffe83754dbc775062555579b26f339399d50e6b99dac3'; \
+        if ((Get-FileHash PowerShell.Windows.x64.$powershell_version.nupkg -Algorithm sha512).Hash -ne $powershell_sha512) { \
+            Write-Host 'CHECKSUM VERIFICATION FAILED!'; \
+            exit 1; \
+        };  \
+        & \dotnet\dotnet tool install --add-source . --tool-path \powershell --version $powershell_version PowerShell.Windows.x64; \
+        & \dotnet\dotnet nuget locals all --clear; \
+        Remove-Item -Force PowerShell.Windows.x64.$powershell_version.nupkg; \
+        Remove-Item -Path \powershell\.store\powershell.windows.x64\$powershell_version\powershell.windows.x64\$powershell_version\powershell.windows.x64.$powershell_version.nupkg -Force; \
+        # Workaround for https://github.com/dotnet/sdk/issues/18410
+        \dotnet\dotnet build-server shutdown; \
+        # Delete everything in the dotnet folder that's not needed in the SDK layer but will instead be derived from base layers
+        Get-ChildItem -Exclude 'LICENSE.txt','ThirdPartyNotices.txt','packs','sdk','sdk-manifests','templates','shared' -Path dotnet \
+            | Remove-Item -Force -Recurse; \
+        Get-ChildItem -Exclude 'Microsoft.WindowsDesktop.App' -Path dotnet\shared \
+            | Remove-Item -Force -Recurse"
+
+FROM mcr.microsoft.com/dotnet/aspnet:6.0.10-nanoserver-1809
+
+LABEL purpose=workshops
+LABEL case=stats
+LABEL apptype=WindowsService
+
+# Install dotnet sdk
+USER ContainerAdministrator
+RUN setx /M PATH "%PATH%;C:\Program Files\powershell;C:\Program Files\MinGit\cmd"
+USER ContainerUser
+
+COPY --from=installer ["/dotnet", "/Program Files/dotnet"]
+COPY --from=installer ["/powershell", "/Program Files/powershell"]
+
+# Copy files
+WORKDIR /app
+COPY . .
+
+# Publish
+RUN dotnet publish WindowsService.csproj -c release -r win-x64 --no-self-contained
+
+# Run app
+ENTRYPOINT ["C:/app/bin/release/net6.0/win-x64/publish/WindowsService.exe"]

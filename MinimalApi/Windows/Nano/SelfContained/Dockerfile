@@ -2,6 +2,7 @@
 FROM mcr.microsoft.com/dotnet/aspnet:6.0.10-nanoserver-1809
 
 LABEL purpose=workshops
+LABEL case=stats
 LABEL apptype=MinimalApi
 
 ENV \

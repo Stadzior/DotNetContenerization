@@ -3,6 +3,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:6.0.403-windowsservercore-ltsc2019 AS build
 
 LABEL purpose=workshops
+LABEL case=stats
 LABEL apptype=MinimalApi
 
 WORKDIR /source
@@ -21,6 +22,11 @@ RUN dotnet publish -c Release -o /app -r win-x64 --self-contained true --no-rest
 
 # final stage/image
 FROM mcr.microsoft.com/windows/servercore:20H2
+
+LABEL purpose=workshops
+LABEL case=stats
+LABEL apptype=MinimalApi
+
 WORKDIR /app
 COPY --from=build /app .
 

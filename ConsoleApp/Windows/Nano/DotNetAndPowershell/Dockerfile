@@ -1,6 +1,10 @@
 # Installer image
 FROM mcr.microsoft.com/windows/servercore:20H2 AS installer
 
+LABEL purpose=workshops
+LABEL case=stats
+LABEL apptype=ConsoleApp
+
 RUN powershell -Command " \
         $ErrorActionPreference = 'Stop'; \
         $ProgressPreference = 'SilentlyContinue'; \
@@ -38,6 +42,7 @@ RUN powershell -Command " \
 FROM mcr.microsoft.com/dotnet/aspnet:6.0.10-nanoserver-1809
 
 LABEL purpose=workshops
+LABEL case=stats
 LABEL apptype=ConsoleApp
 
 ENV \

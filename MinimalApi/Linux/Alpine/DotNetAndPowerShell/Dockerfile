@@ -1,6 +1,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:6.0.403-alpine3.16-amd64
 
 LABEL purpose=workshops
+LABEL case=stats
 LABEL apptype=MinimalApi
 
 ENV \
