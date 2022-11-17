@@ -12,22 +12,12 @@ WORKDIR /source
 COPY . .
 RUN dotnet publish -c Release -o /app --self-contained /p:PublishTrimmed=true
 
-# final stage/image
-FROM mcr.microsoft.com/dotnet/aspnet:6.0.10-nanoserver-1809
-
-ENV \
-    # Ensure we listen on any IP Address 
-    DOTNET_URLS=http://+:80
+FROM nginx:alpine AS final
 
 LABEL purpose=workshops
 LABEL case=stats
 LABEL apptype=Blazor
 
-WORKDIR /app
+WORKDIR /usr/share/nginx/html
 COPY --from=build /app/wwwroot .
-#config file COPY nginx.conf /etc/nginx/nginx.conf
-
-# Enable detection of running in a container
-ENV DOTNET_RUNNING_IN_CONTAINER=true
-
-#ENTRYPOINT ["Blazor"]
+COPY nginx.conf /etc/nginx/nginx.conf
