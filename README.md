@@ -239,3 +239,10 @@ Password: zaq1@WSX
 ```
 Or via cli:
 `docker exec -it ubuntu-dotnet-mssql-1 /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P zaq1@WSX`
+
+# Queue:
+```
+cd [PATH_TO_REPO]/Queue
+docker image build -t rabbitmq:1 -f Dockerfile .
+docker container run -d -p 1434:1433 --name rabbitmq rabbitmq:1
+```
