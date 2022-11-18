@@ -242,7 +242,8 @@ Or via cli:
 
 # Queue:
 ```
-cd [PATH_TO_REPO]/Queue
-docker image build -t rabbitmq:1 -f Dockerfile .
-docker container run -d -p 1434:1433 --name rabbitmq rabbitmq:1
+docker container run -d -p 1434:1433 --name rabbitmq rabbitmq:3.11-management
+docker exec -it rabbitmq rabbitmqadmin declare exchange name=test-exchange type=direct
+docker exec -it rabbitmq rabbitmqadmin declare queue name=test-queue durable=false
+docker exec -it rabbitmq rabbitmqadmin declare binding source="test-exchange" destination_type="queue" destination="test-queue" routing_key="test-key"
 ```
