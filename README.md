@@ -11,16 +11,15 @@ Usage:
    6. To cleanup run `stats_cleanup.ps1` (double check by yourself and do another cleanup if needed).
 2. Queue integration example:
    1. Switch to Windows containers in docker desktop.
-   2. Create folder in `C:\workspace`
-   3. run `queue.ps1`
-   4. Open the following to observe the whole process:
+   2. run `queue.ps1`
+   3. Open the following to observe the whole process:
       1. Open `C:\workspace` in file explorer
       2. Open queue visualisation under `http://localhost:15672/#/queues` (l:guest, p:guest)
       3. Open frontend page under `http://localhost:5001`
       4. Open producer & consumer logs in docker desktop.
-   5. Put some .txt files in `C:\temp\main`
-   6. Observe how containers are beeing created & removed as messages appears in frontend page.
-   7. To cleanup run `queue_cleanup.ps1` (double check by yourself and do another cleanup if needed).
+   4. Put some .txt files in `C:\workspace`
+   5. Observe how containers are beeing created & removed as messages appears in frontend page.
+   6. To cleanup run `queue_cleanup.ps1` (double check by yourself and do another cleanup if needed).
 
 # Performance/resource usage/stats comparison:
 ## Console App

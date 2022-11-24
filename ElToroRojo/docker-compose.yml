@@ -1,0 +1,9 @@
+services:
+  Incoming.Watchdog:
+    build: ./Incoming.Watchdog
+    volumes:
+      - C:\workspace:/workspace:ro
+  Incoming.Producer:
+    build: ./Incoming.Producer    
+    volumes:
+      - C:\workspace:/workspace:rw
