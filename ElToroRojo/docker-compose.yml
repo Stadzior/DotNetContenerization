@@ -1,9 +1,10 @@
 services:
   Incoming.Watchdog:
     build: ./Incoming.Watchdog
+    image: incoming.watchdog
+    container_name: incoming.watchdog
     volumes:
       - C:\workspace:/workspace:ro
-  Incoming.Producer:
-    build: ./Incoming.Producer    
-    volumes:
-      - C:\workspace:/workspace:rw
+      - type: volume
+        source: npipe://./pipe/docker_engine
+        target: /var/run/docker.sock

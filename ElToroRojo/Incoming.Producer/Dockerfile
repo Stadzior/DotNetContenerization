@@ -26,5 +26,4 @@ LABEL apptype=ConsoleApp
 WORKDIR /app
 COPY --from=build /app .
 
-ENTRYPOINT ["./Incoming.Producer"]
-
+ENTRYPOINT ./Incoming.Producer ${FILE_PATH}
