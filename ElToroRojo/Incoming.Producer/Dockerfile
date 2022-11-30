@@ -20,7 +20,7 @@ RUN dotnet publish -c Release -o /app -r linux-musl-x64 --self-contained true --
 FROM mcr.microsoft.com/dotnet/runtime-deps:6.0.11-alpine3.16-amd64
 
 LABEL purpose=workshops
-LABEL case=stats
+LABEL case=queue
 LABEL apptype=ConsoleApp
 
 WORKDIR /app

@@ -22,6 +22,7 @@ while(true)
                 Image = "incoming.producer:latest",
                 HostConfig = new HostConfig
                 {
+                    AutoRemove = true,
                     Binds = new List<string>
                     {
                         @"C:\workspace:/workspace:rw"
@@ -37,20 +38,6 @@ while(true)
             await client.Containers.StartContainerAsync(createResponse.ID, new ContainerStartParameters());
 
             Console.WriteLine($"Started container with id: {createResponse.ID}");
-
-            Task.Factory.StartNew(() =>
-            {
-                client.Containers.WaitContainerAsync(createResponse.ID);
-
-                var removeParameters = new ContainerRemoveParameters
-                {
-                    Force = true,
-                    RemoveLinks = true,
-                    RemoveVolumes = true
-                };
-
-                client.Containers.RemoveContainerAsync(createResponse.ID, removeParameters);
-            });
         }
     }
 }
