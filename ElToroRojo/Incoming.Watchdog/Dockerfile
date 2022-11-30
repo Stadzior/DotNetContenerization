@@ -26,5 +26,6 @@ LABEL apptype=ConsoleApp
 WORKDIR /app
 COPY --from=build /app .
 
+RUN apk add docker openrc
 ENTRYPOINT ["./Incoming.Watchdog"]
 
