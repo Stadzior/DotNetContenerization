@@ -6,5 +6,5 @@ services:
     volumes:
       - C:\workspace:/workspace:ro
       - type: volume
-        source: npipe://./pipe/docker_engine
+        source: /var/run/docker.sock
         target: /var/run/docker.sock
