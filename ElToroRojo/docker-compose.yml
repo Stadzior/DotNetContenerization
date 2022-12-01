@@ -1,6 +1,5 @@
 services:
   Incoming.Watchdog:
-    build: ./Incoming.Watchdog
     image: incoming.watchdog
     container_name: incoming.watchdog
     volumes:
