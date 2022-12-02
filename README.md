@@ -247,3 +247,6 @@ docker exec rabbitmq rabbitmqadmin declare exchange name=test-exchange type=dire
 docker exec rabbitmq rabbitmqadmin declare queue name=test-queue durable=false
 docker exec rabbitmq rabbitmqadmin declare binding source="test-exchange" destination_type="queue" destination="test-queue" routing_key="test-key"
 ```
+
+# ElToroRojo:smiling_imp::
+All in slim linux containers, dynamically created on demand.
