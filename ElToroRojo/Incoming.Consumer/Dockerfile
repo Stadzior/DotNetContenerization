@@ -18,11 +18,11 @@ RUN dotnet publish -c Release -o /app -r linux-musl-x64 --self-contained true --
 # final stage/image
 FROM mcr.microsoft.com/dotnet/runtime-deps:6.0.11-alpine3.16-amd64
 
-LABEL purpose=producer
+LABEL purpose=consumer
 LABEL case=queue
 LABEL apptype=consoleapp
 
 WORKDIR /app
 COPY --from=build /app .
 
-ENTRYPOINT ./Incoming.Producer ${FILE_PATH}
+ENTRYPOINT ./Incoming.Consumer ${FILE_PATH}

@@ -2,9 +2,9 @@
 # https://hub.docker.com/_/microsoft-dotnet
 FROM mcr.microsoft.com/dotnet/sdk:6.0-alpine AS build
 
-LABEL purpose=workshops
+LABEL purpose=build
 LABEL case=queue
-LABEL apptype=ConsoleApp
+LABEL apptype=consoleapp
 
 WORKDIR /source
 
@@ -19,9 +19,9 @@ RUN dotnet publish -c Release -o /app -r linux-musl-x64 --self-contained true --
 # final stage/image
 FROM mcr.microsoft.com/dotnet/runtime-deps:6.0.11-alpine3.16-amd64
 
-LABEL purpose=workshops
+LABEL purpose=watchdog
 LABEL case=queue
-LABEL apptype=ConsoleApp
+LABEL apptype=consoleapp
 
 WORKDIR /app
 COPY --from=build /app .
