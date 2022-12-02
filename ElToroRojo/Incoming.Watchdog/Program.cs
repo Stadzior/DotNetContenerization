@@ -25,7 +25,7 @@ while(true)
             },
             HostConfig = new HostConfig
             {
-                //AutoRemove = true,
+                AutoRemove = true,
                 PortBindings = new Dictionary<string, IList<PortBinding>>
                 {
                     {"15672", new List<PortBinding> { new() { HostPort = "15673" } }}
@@ -46,10 +46,24 @@ while(true)
 
         var execDeclareExchangeParameters = new ContainerExecCreateParameters
         {
-            Cmd = new List<string> { "rabbitmqadmin", "declare", "exchange", "name=test-exchange","type=direct" }
+            Cmd = new List<string> { "rabbitmqadmin", "declare", "exchange", "name=test-exchange","type=direct" },
+            AttachStdout = true,
+            AttachStderr = true
         };
         var execDeclareExchange = await client.Exec.ExecCreateContainerAsync(queueContainer.ID, execDeclareExchangeParameters);
-        await client.Exec.StartAndAttachContainerExecAsync(execDeclareExchange.ID, false);
+        
+        using var declareExchangeStream = await client.Exec.StartAndAttachContainerExecAsync(execDeclareExchange.ID, false);
+        var (stdout, stderr) = await declareExchangeStream
+            .ReadOutputToEndAsync(new CancellationToken())
+            .ConfigureAwait(false);
+        var execInspectResponse = await client.Exec
+            .InspectContainerExecAsync(execDeclareExchange.ID)
+            .ConfigureAwait(false);
+        
+        Console.WriteLine($"!!! INSPECT: {execInspectResponse.ContainerID}, {execInspectResponse.ExecID}, {execInspectResponse.ExitCode}, {execInspectResponse.Pid}, {execInspectResponse.Running} !!!");
+        Console.WriteLine($"!!! STDOUT: {stdout} !!!");
+        Console.WriteLine($"!!! STDERR: {stderr} !!!");
+
         Console.WriteLine($"Declared exchange inside queue container with id: {queueContainer.ID}");
 
         var execDeclareQueueParameters = new ContainerExecCreateParameters
