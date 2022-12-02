@@ -40,7 +40,6 @@ while(true)
         };
 
         var queueContainer = await client.Containers.CreateContainerAsync(queueParameters);
-        Console.WriteLine($"Queue container with id: {queueContainer.ID}");
 
         await client.Containers.StartContainerAsync(queueContainer.ID, new ContainerStartParameters());
         Console.WriteLine($"Started queue container with id: {queueContainer.ID}");
@@ -63,7 +62,7 @@ while(true)
 
         var execDeclareBindingParameters = new ContainerExecCreateParameters
         {
-            Cmd = new List<string> { "rabbitmqadmin" ,"declare" ,"binding" ,"source=\"test-exchange\"" ,"destination_type=\"queue\"" ,"destination=\"test-queue\"" ,"routing_key=\"test-key\"" }
+            Cmd = new List<string> { "rabbitmqadmin" ,"declare" ,"binding" ,"source=test-exchange" ,"destination_type=queue" ,"destination=test-queue" ,"routing_key=test-key" }
         };
         var execDeclareBinding = await client.Exec.ExecCreateContainerAsync(queueContainer.ID, execDeclareBindingParameters);
         await client.Exec.StartAndAttachContainerExecAsync(execDeclareBinding.ID, false);
@@ -119,7 +118,7 @@ while(true)
         Console.WriteLine("Waiting for producer/consumer containers to remove themselves.");
 
         var dynamicContainersExists = true;
-        var dynamicContainersPurposes = new[] { "producer", "consumer" };
+        var dynamicContainersPurposes = new[] { "producer", "consumer", "api" };
 
         while(dynamicContainersExists)
         {

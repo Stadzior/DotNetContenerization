@@ -245,7 +245,7 @@ Or via cli:
 docker container run -d -p 15673:15672 --name rabbitmq rabbitmq:3.11-management
 docker exec rabbitmq rabbitmqadmin declare exchange name=test-exchange type=direct
 docker exec rabbitmq rabbitmqadmin declare queue name=test-queue durable=false
-docker exec rabbitmq rabbitmqadmin declare binding source="test-exchange" destination_type="queue" destination="test-queue" routing_key="test-key"
+docker exec rabbitmq rabbitmqadmin declare binding source=test-exchange destination_type=queue destination=test-queue routing_key=test-key
 ```
 
 # ElToroRojo:smiling_imp::

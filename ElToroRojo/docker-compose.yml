@@ -5,3 +5,9 @@ services:
     volumes:
       - C:\workspace:/workspace:ro
       - /var/run/docker.sock:/var/run/docker.sock
+  # ErrorDatabase:
+  #   image: errordatabase
+  #   container_name: errordatabase
+  # TargetDatabase:
+  #   image: targetdatabase
+  #   container_name: targetdatabase 
