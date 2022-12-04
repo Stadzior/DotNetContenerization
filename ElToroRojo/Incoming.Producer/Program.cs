@@ -2,7 +2,7 @@
 using RabbitMQ.Client;
 
 var filePath = args[0];
-Console.WriteLine($"Processing file: {filePath}");
+Console.WriteLine($"Processing file: {filePath}. {DateTime.Now.ToLongTimeString()}");
 
 if (File.Exists(filePath))
 {
@@ -21,7 +21,7 @@ if (File.Exists(filePath))
 
     using var connection = connectionFactory.CreateConnection();
     using var channel = connection.CreateModel();
-    Console.WriteLine("Connected to route: test-key.");
+    Console.WriteLine($"Connected to route: test-key. {DateTime.Now.ToLongTimeString()}");
 
     var properties = channel.CreateBasicProperties();
     properties.Persistent = true;
@@ -29,14 +29,14 @@ if (File.Exists(filePath))
     foreach (var row in rows)
     {
         channel.BasicPublish("test-exchange", "test-key", true, properties, Encoding.UTF8.GetBytes(row));
-        Console.WriteLine($"Sending message: {row}, from file: {filePath}, to route: test-key");
+        Console.WriteLine($"Sending message: {row}, from file: {filePath}, to route: test-key. {DateTime.Now.ToLongTimeString()}");
     }
 
     File.Delete(filePath);
-    Console.WriteLine($"File: {filePath} deleted.");
+    Console.WriteLine($"File: {filePath} deleted. {DateTime.Now.ToLongTimeString()}");
     
     channel.Close();
     connection.Close();
 }
 else
-    Console.WriteLine($"File: {filePath} does not exist.");
+    Console.WriteLine($"File: {filePath} does not exist. {DateTime.Now.ToLongTimeString()}");
