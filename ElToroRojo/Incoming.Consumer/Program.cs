@@ -16,7 +16,7 @@ var connectionFactory = new ConnectionFactory
     VirtualHost = "/",
     HostName = "incoming.queue",
     Port = 5672,
-    ClientProvidedName = "Producer",
+    ClientProvidedName = "Consumer",
     DispatchConsumersAsync = true
 };
 

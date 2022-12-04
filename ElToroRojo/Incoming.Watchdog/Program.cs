@@ -3,14 +3,15 @@ using Docker.DotNet.Models;
 
 const string workspaceDir = "/workspace";
 
-while(true)
+Console.WriteLine($"Watchdog started. {DateTime.Now.ToShortTimeString()}");
+while (true)
 {
-    Console.WriteLine($"Beginning of processing. {DateTime.Now.ToShortTimeString()}");
-
     var files = Directory.GetFiles(workspaceDir);
 
     if (files.Any())
     {
+        Console.WriteLine($"Beginning of processing {files.Length} file(s). {DateTime.Now.ToShortTimeString()}");
+
         var dockerEngineUrl = new Uri("unix://var/run/docker.sock");
         using var client = new DockerClientConfiguration(dockerEngineUrl).CreateClient();
 
@@ -123,38 +124,9 @@ while(true)
 
 async Task SetupRabbitMq(IDockerClient client, string containerId)
 {
-    var rabbitIsReadyToUse = false;
-    while (!rabbitIsReadyToUse)
-    {
-        var execListExchangesParameters = new ContainerExecCreateParameters
-        {
-            Cmd = new List<string> { "rabbitmqadmin", "list", "exchanges" },
-            AttachStdin = true,
-            AttachStderr = true
-        };
+    await ExecCommandInsideContainer(client, containerId, "rabbitmqadmin list exchanges", 10);
+    Console.WriteLine($"RabbitMq is ready to use. {DateTime.Now.ToLongTimeString()}");
 
-        var execListExchanges = await client.Exec.ExecCreateContainerAsync(containerId, execListExchangesParameters);
-
-        using var declareExchangeStream = await client.Exec.StartAndAttachContainerExecAsync(execListExchanges.ID, false);
-        var (_, _) = await declareExchangeStream
-            .ReadOutputToEndAsync(new CancellationToken())
-            .ConfigureAwait(false);
-        var execInspectResponse = await client.Exec
-            .InspectContainerExecAsync(execListExchanges.ID)
-            .ConfigureAwait(false);
-
-        if (execInspectResponse.ExitCode == 0)
-        {
-            rabbitIsReadyToUse = true;
-            Console.WriteLine($"RabbitMq is ready to use. {DateTime.Now.ToLongTimeString()}");
-        }
-        else
-        {
-            Console.WriteLine($"RabbitMq is still not operational. {DateTime.Now.ToLongTimeString()}");
-            Thread.Sleep(TimeSpan.FromSeconds(1));
-        }
-    }
-    
     await ExecCommandInsideContainer(client, containerId, "rabbitmqadmin declare exchange name=test-exchange type=direct");
     Console.WriteLine($"Declared exchange inside queue container with id: {containerId} {DateTime.Now.ToLongTimeString()}");
 
@@ -169,18 +141,36 @@ async Task SetupRabbitMq(IDockerClient client, string containerId)
 
     await ExecCommandInsideContainer(client, containerId, "rabbitmqctl set_user_tags admin administrator");
     Console.WriteLine($"Made that new user an admin inside queue container with id: {containerId} {DateTime.Now.ToLongTimeString()}");
-
-    await ExecCommandInsideContainer(client, containerId, "rabbitmqctl set_permissions -p / admin \".*\" \".*\" \".*\"");
+    
+    await ExecCommandInsideContainer(client, containerId, "rabbitmqctl set_permissions -p / admin .* .* .*");
     Console.WriteLine($"Set permissions for an admin inside queue container with id: {containerId} {DateTime.Now.ToLongTimeString()}");
 }
 
-async Task ExecCommandInsideContainer(IDockerClient client, string containerId, string command)
+async Task ExecCommandInsideContainer(IDockerClient client, string containerId, string command, int retryCount = 0)
 {
-    var execParameters = new ContainerExecCreateParameters
+    for (var i = 0; i <= retryCount; i++)
     {
-        Cmd = command.Split(' ').ToList()
-    };
+        var execParameters = new ContainerExecCreateParameters
+        {
+            Cmd = command.Split(' ').ToList(),
+            AttachStdin = true,
+            AttachStderr = true
+        };
 
-    var exec = await client.Exec.ExecCreateContainerAsync(containerId, execParameters);
-    await client.Exec.StartContainerExecAsync(exec.ID);
+        var exec = await client.Exec.ExecCreateContainerAsync(containerId, execParameters);
+
+        using var execStream = await client.Exec.StartAndAttachContainerExecAsync(exec.ID, false);
+        await execStream
+            .ReadOutputToEndAsync(new CancellationToken())
+            .ConfigureAwait(false);
+        var execInspectResponse = await client.Exec
+            .InspectContainerExecAsync(exec.ID)
+            .ConfigureAwait(false);
+
+        if (execInspectResponse.ExitCode == 0)
+            break;
+
+        Console.WriteLine($"Failed execution of '{command}' ({i+1}/{retryCount}). {DateTime.Now.ToLongTimeString()}");
+        Thread.Sleep(TimeSpan.FromSeconds(1));
+    }
 }
