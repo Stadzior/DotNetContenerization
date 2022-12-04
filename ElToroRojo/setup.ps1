@@ -1,4 +1,5 @@
 #Cleanup
+docker network prune -f
 docker container rm -f $(docker container ls -aqf label=case=queue)
 #docker image rm $(docker image ls -aqf label=case=queue)
 #docker image rm rabbitmq:3.11-management

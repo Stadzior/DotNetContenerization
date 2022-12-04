@@ -10,13 +10,12 @@ if (File.Exists(filePath))
 
     var connectionFactory = new ConnectionFactory
     {
-        UserName = "guest",
-        Password = "guest",
+        UserName = "admin",
+        Password = "admin",
         VirtualHost = "/",
-        HostName = "localhost",
-        Port = 1434,
-        ClientProvidedName = "Producer",
-        DispatchConsumersAsync = true
+        HostName = "incoming.queue",
+        Port = 5672,
+        ClientProvidedName = "Producer"
     };
 
     using var connection = connectionFactory.CreateConnection();

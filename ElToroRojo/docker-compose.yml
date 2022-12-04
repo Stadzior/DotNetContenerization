@@ -5,9 +5,17 @@ services:
     volumes:
       - C:\workspace:/workspace:ro
       - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - incoming-queue-network
+      - incoming-api-network
   # ErrorDatabase:
   #   image: errordatabase
   #   container_name: errordatabase
   # TargetDatabase:
   #   image: targetdatabase
   #   container_name: targetdatabase 
+networks:
+  incoming-queue-network:
+    driver: bridge
+  incoming-api-network:
+    driver: bridge

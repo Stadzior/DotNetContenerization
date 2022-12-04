@@ -11,11 +11,11 @@ using var timer = new Timer(_ =>
 
 var connectionFactory = new ConnectionFactory
 {
-    UserName = "guest",
-    Password = "guest",
+    UserName = "admin",
+    Password = "admin",
     VirtualHost = "/",
-    HostName = "localhost",
-    Port = 1434,
+    HostName = "incoming.queue",
+    Port = 5672,
     ClientProvidedName = "Producer",
     DispatchConsumersAsync = true
 };

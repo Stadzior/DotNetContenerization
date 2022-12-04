@@ -18,6 +18,7 @@ while(true)
         {
             Name = "incoming.queue",
             Image = "rabbitmq:3.11-management",
+            Hostname = "incoming.queue",
             ExposedPorts = new Dictionary<string, EmptyStruct>
             {
                 {"15672", default}
@@ -28,7 +29,8 @@ while(true)
                 PortBindings = new Dictionary<string, IList<PortBinding>>
                 {
                     {"15672", new List<PortBinding> { new() { HostPort = "15673" } }}
-                }
+                },
+                NetworkMode = "eltororojo_incoming-queue-network"
             },
             Labels = new Dictionary<string, string>
             {
@@ -43,73 +45,7 @@ while(true)
         await client.Containers.StartContainerAsync(queueContainer.ID, new ContainerStartParameters());
         Console.WriteLine($"Started queue container with id: {queueContainer.ID}. {DateTime.Now.ToLongTimeString()}");
 
-        var rabbitIsReadyToUse = false;
-        while (!rabbitIsReadyToUse)
-        {
-            var execListExchangesParameters = new ContainerExecCreateParameters
-            {
-                Cmd = new List<string> { "rabbitmqadmin", "list", "exchanges" },
-                AttachStdin = true,
-                AttachStderr = true
-            };
-
-            var execListExchanges = await client.Exec.ExecCreateContainerAsync(queueContainer.ID, execListExchangesParameters);
-            //await client.Exec.StartContainerExecAsync(execListExchanges.ID);
-
-            //var execInspectResponse = await client.Exec
-            //    .InspectContainerExecAsync(execListExchanges.ID)
-            //    .ConfigureAwait(false);
-
-            using var declareExchangeStream = await client.Exec.StartAndAttachContainerExecAsync(execListExchanges.ID, false);
-            var (stdout, stderr) = await declareExchangeStream
-                .ReadOutputToEndAsync(new CancellationToken())
-                .ConfigureAwait(false);
-            var execInspectResponse = await client.Exec
-                .InspectContainerExecAsync(execListExchanges.ID)
-                .ConfigureAwait(false);
-
-            Console.WriteLine($"!!! INSPECT: {execInspectResponse.ContainerID}, {execInspectResponse.ExecID}, {execInspectResponse.ExitCode}, {execInspectResponse.Pid}, {execInspectResponse.Running} {DateTime.Now.ToLongTimeString()} !!!");
-            Console.WriteLine($"!!! STDOUT: {stdout} !!!");
-            Console.WriteLine($"!!! STDERR: {stderr} !!!");
-
-            if (execInspectResponse.ExitCode == 0)
-            {
-                rabbitIsReadyToUse = true;
-                Console.WriteLine($"RabbitMq is ready to use. {DateTime.Now.ToLongTimeString()}");
-            }
-            else
-            {
-                Console.WriteLine($"RabbitMq is still not operational. {DateTime.Now.ToLongTimeString()}");
-                Thread.Sleep(TimeSpan.FromSeconds(1));
-            }
-        }
-
-        var execDeclareExchangeParameters = new ContainerExecCreateParameters
-        {
-            Cmd = new List<string> { "rabbitmqadmin", "declare", "exchange", "name=test-exchange", "type=direct" }
-        };
-
-        var execDeclareExchange = await client.Exec.ExecCreateContainerAsync(queueContainer.ID, execDeclareExchangeParameters);
-        await client.Exec.StartContainerExecAsync(execDeclareExchange.ID);
-        Console.WriteLine($"Declared exchange inside queue container with id: {queueContainer.ID} {DateTime.Now.ToLongTimeString()}");
-
-        var execDeclareQueueParameters = new ContainerExecCreateParameters
-        {
-            Cmd = new List<string> { "rabbitmqadmin" ,"declare" ,"queue" ,"name=test-queue" ,"durable=false" }
-        };
-
-        var execDeclareQueue = await client.Exec.ExecCreateContainerAsync(queueContainer.ID, execDeclareQueueParameters);
-        await client.Exec.StartContainerExecAsync(execDeclareQueue.ID);
-        Console.WriteLine($"Declared queue inside queue container with id: {queueContainer.ID} {DateTime.Now.ToLongTimeString()}");
-
-        var execDeclareBindingParameters = new ContainerExecCreateParameters
-        {
-            Cmd = new List<string> { "rabbitmqadmin" ,"declare" ,"binding" ,"source=test-exchange" ,"destination_type=queue" ,"destination=test-queue" ,"routing_key=test-key" }
-        };
-
-        var execDeclareBinding = await client.Exec.ExecCreateContainerAsync(queueContainer.ID, execDeclareBindingParameters);
-        await client.Exec.StartContainerExecAsync(execDeclareBinding.ID);
-        Console.WriteLine($"Declared binding inside queue container with id: {queueContainer.ID} {DateTime.Now.ToLongTimeString()}");
+        await SetupRabbitMq(client, queueContainer.ID);
 
         foreach (var filePath in files)
         {
@@ -120,8 +56,9 @@ while(true)
                 Name = $"incoming.consumer-{fileName}",
                 Image = "incoming.consumer:latest",
                 HostConfig = new HostConfig
-                { 
-                    //AutoRemove = true
+                {
+                    //AutoRemove = true,
+                    NetworkMode = "eltororojo_incoming-queue-network"
                 }
             };
             
@@ -141,7 +78,8 @@ while(true)
                     Binds = new List<string>
                     {
                         @"C:\workspace:/workspace:rw"
-                    }
+                    },
+                    NetworkMode = "eltororojo_incoming-queue-network"
                 },
                 Env = new List<string>
                 {
@@ -181,4 +119,68 @@ while(true)
 
         Console.WriteLine($"Queue container stopped (and automatically removed). {DateTime.Now.ToLongTimeString()}");
     }
+}
+
+async Task SetupRabbitMq(IDockerClient client, string containerId)
+{
+    var rabbitIsReadyToUse = false;
+    while (!rabbitIsReadyToUse)
+    {
+        var execListExchangesParameters = new ContainerExecCreateParameters
+        {
+            Cmd = new List<string> { "rabbitmqadmin", "list", "exchanges" },
+            AttachStdin = true,
+            AttachStderr = true
+        };
+
+        var execListExchanges = await client.Exec.ExecCreateContainerAsync(containerId, execListExchangesParameters);
+
+        using var declareExchangeStream = await client.Exec.StartAndAttachContainerExecAsync(execListExchanges.ID, false);
+        var (_, _) = await declareExchangeStream
+            .ReadOutputToEndAsync(new CancellationToken())
+            .ConfigureAwait(false);
+        var execInspectResponse = await client.Exec
+            .InspectContainerExecAsync(execListExchanges.ID)
+            .ConfigureAwait(false);
+
+        if (execInspectResponse.ExitCode == 0)
+        {
+            rabbitIsReadyToUse = true;
+            Console.WriteLine($"RabbitMq is ready to use. {DateTime.Now.ToLongTimeString()}");
+        }
+        else
+        {
+            Console.WriteLine($"RabbitMq is still not operational. {DateTime.Now.ToLongTimeString()}");
+            Thread.Sleep(TimeSpan.FromSeconds(1));
+        }
+    }
+    
+    await ExecCommandInsideContainer(client, containerId, "rabbitmqadmin declare exchange name=test-exchange type=direct");
+    Console.WriteLine($"Declared exchange inside queue container with id: {containerId} {DateTime.Now.ToLongTimeString()}");
+
+    await ExecCommandInsideContainer(client, containerId, "rabbitmqadmin declare queue name=test-queue durable=false");
+    Console.WriteLine($"Declared queue inside queue container with id: {containerId} {DateTime.Now.ToLongTimeString()}");
+
+    await ExecCommandInsideContainer(client, containerId, "rabbitmqadmin declare binding source=test-exchange destination_type=queue destination=test-queue routing_key=test-key");
+    Console.WriteLine($"Declared binding inside queue container with id: {containerId} {DateTime.Now.ToLongTimeString()}");
+
+    await ExecCommandInsideContainer(client, containerId, "rabbitmqctl add_user admin admin");
+    Console.WriteLine($"Created user inside queue container with id: {containerId} {DateTime.Now.ToLongTimeString()}");
+
+    await ExecCommandInsideContainer(client, containerId, "rabbitmqctl set_user_tags admin administrator");
+    Console.WriteLine($"Made that new user an admin inside queue container with id: {containerId} {DateTime.Now.ToLongTimeString()}");
+
+    await ExecCommandInsideContainer(client, containerId, "rabbitmqctl set_permissions -p / admin \".*\" \".*\" \".*\"");
+    Console.WriteLine($"Set permissions for an admin inside queue container with id: {containerId} {DateTime.Now.ToLongTimeString()}");
+}
+
+async Task ExecCommandInsideContainer(IDockerClient client, string containerId, string command)
+{
+    var execParameters = new ContainerExecCreateParameters
+    {
+        Cmd = command.Split(' ').ToList()
+    };
+
+    var exec = await client.Exec.ExecCreateContainerAsync(containerId, execParameters);
+    await client.Exec.StartContainerExecAsync(exec.ID);
 }
