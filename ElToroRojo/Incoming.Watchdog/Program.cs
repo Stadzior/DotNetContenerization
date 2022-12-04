@@ -25,7 +25,7 @@ while(true)
             },
             HostConfig = new HostConfig
             {
-                AutoRemove = true,
+                //AutoRemove = true,
                 PortBindings = new Dictionary<string, IList<PortBinding>>
                 {
                     {"15672", new List<PortBinding> { new() { HostPort = "15673" } }}
@@ -43,43 +43,60 @@ while(true)
 
         await client.Containers.StartContainerAsync(queueContainer.ID, new ContainerStartParameters());
         Console.WriteLine($"Started queue container with id: {queueContainer.ID}");
+        
+        var execListExchangesParameters = new ContainerExecCreateParameters
+        {
+            Cmd = new List<string> { "rabbitmqadmin", "list", "exchanges" }
+        };
+
+        var execListExchanges = await client.Exec.ExecCreateContainerAsync(queueContainer.ID, execListExchangesParameters);
+
+        var rabbitIsReadyToUse = false;
+        while (!rabbitIsReadyToUse)
+        {
+            await client.Exec.StartContainerExecAsync(execListExchanges.ID);
+
+            var execInspectResponse = await client.Exec
+                .InspectContainerExecAsync(execListExchanges.ID)
+                .ConfigureAwait(false);
+
+            if (execInspectResponse.ExitCode == 0)
+            {
+                rabbitIsReadyToUse = true;
+                Console.WriteLine($"RabbitMq is ready to use at: {DateTime.Now.ToLongTimeString()}");
+            }
+            else
+            {
+                Console.WriteLine($"RabbitMq is still not operational at: {DateTime.Now.ToLongTimeString()}");
+                Thread.Sleep(TimeSpan.FromSeconds(1));
+            }
+        }
 
         var execDeclareExchangeParameters = new ContainerExecCreateParameters
         {
-            Cmd = new List<string> { "rabbitmqadmin", "declare", "exchange", "name=test-exchange","type=direct" },
-            AttachStdout = true,
-            AttachStderr = true
+            Cmd = new List<string> { "rabbitmqadmin", "declare", "exchange", "name=test-exchange", "type=direct" }
         };
-        var execDeclareExchange = await client.Exec.ExecCreateContainerAsync(queueContainer.ID, execDeclareExchangeParameters);
-        
-        using var declareExchangeStream = await client.Exec.StartAndAttachContainerExecAsync(execDeclareExchange.ID, false);
-        var (stdout, stderr) = await declareExchangeStream
-            .ReadOutputToEndAsync(new CancellationToken())
-            .ConfigureAwait(false);
-        var execInspectResponse = await client.Exec
-            .InspectContainerExecAsync(execDeclareExchange.ID)
-            .ConfigureAwait(false);
-        
-        Console.WriteLine($"!!! INSPECT: {execInspectResponse.ContainerID}, {execInspectResponse.ExecID}, {execInspectResponse.ExitCode}, {execInspectResponse.Pid}, {execInspectResponse.Running} !!!");
-        Console.WriteLine($"!!! STDOUT: {stdout} !!!");
-        Console.WriteLine($"!!! STDERR: {stderr} !!!");
 
+        var execDeclareExchange = await client.Exec.ExecCreateContainerAsync(queueContainer.ID, execDeclareExchangeParameters);
+        await client.Exec.StartContainerExecAsync(execDeclareExchange.ID);
         Console.WriteLine($"Declared exchange inside queue container with id: {queueContainer.ID}");
 
         var execDeclareQueueParameters = new ContainerExecCreateParameters
         {
             Cmd = new List<string> { "rabbitmqadmin" ,"declare" ,"queue" ,"name=test-queue" ,"durable=false" }
         };
+
         var execDeclareQueue = await client.Exec.ExecCreateContainerAsync(queueContainer.ID, execDeclareQueueParameters);
-        await client.Exec.StartAndAttachContainerExecAsync(execDeclareQueue.ID, false);
+        await client.Exec.StartContainerExecAsync(execDeclareQueue.ID);
         Console.WriteLine($"Declared queue inside queue container with id: {queueContainer.ID}");
 
         var execDeclareBindingParameters = new ContainerExecCreateParameters
         {
             Cmd = new List<string> { "rabbitmqadmin" ,"declare" ,"binding" ,"source=test-exchange" ,"destination_type=queue" ,"destination=test-queue" ,"routing_key=test-key" }
         };
+
         var execDeclareBinding = await client.Exec.ExecCreateContainerAsync(queueContainer.ID, execDeclareBindingParameters);
-        await client.Exec.StartAndAttachContainerExecAsync(execDeclareBinding.ID, false);
+        await client.Exec.StartContainerExecAsync(execDeclareBinding.ID);
         Console.WriteLine($"Declared binding inside queue container with id: {queueContainer.ID}");
 
         foreach (var filePath in files)
