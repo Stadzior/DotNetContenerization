@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using System;
+using System.IO;
+using System.Text;
 using RabbitMQ.Client;
 
 var filePath = args[0];

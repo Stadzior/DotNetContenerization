@@ -1,13 +1,23 @@
-﻿using System.Text;
+﻿using System;
+using System.Data.SqlClient;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
+while (true) {}
+const string apiUri = "http://localhost:5001";
+const string connectionString = "data source=localhost,1433;initial catalog=ErrorDb;integrated security=false;MultipleActiveResultSets=True;";
 using var cancellationTokenSource = new CancellationTokenSource();
 
 using var timer = new Timer(_ =>
 {
     cancellationTokenSource.Cancel();
-}, null, TimeSpan.FromMinutes(1), Timeout.InfiniteTimeSpan);
+}, null, TimeSpan.FromSeconds(10), Timeout.InfiniteTimeSpan);
 
 var connectionFactory = new ConnectionFactory
 {
@@ -20,24 +30,24 @@ var connectionFactory = new ConnectionFactory
     DispatchConsumersAsync = true
 };
 
-using var connection = connectionFactory.CreateConnection();
-using var channel = connection.CreateModel();
-Console.WriteLine("Connected to route: test-key.");
+using var queueConnection = connectionFactory.CreateConnection();
+using var channel = queueConnection.CreateModel();
+Console.WriteLine($"Connected to route: test-key. {DateTime.Now.ToLongTimeString()}");
 
 channel.BasicQos(0, 1, false);
 var eventsConsumer = new AsyncEventingBasicConsumer(channel);
 channel.BasicConsume("test-queue", false, eventsConsumer);
+Console.WriteLine($"Subscribed to queue: test-queue. {DateTime.Now.ToLongTimeString()}");
+
+var currentlyProcessing = false;
 
 eventsConsumer.Received += async (_, payload) =>
 {
+    currentlyProcessing = true;
     try
     {
-        await Task.Run(() =>
-        {
-            var payloadAsString = Encoding.UTF8.GetString(payload.Body.ToArray());
-            Console.WriteLine(payloadAsString);
-            channel.BasicAck(payload.DeliveryTag, false);
-        });
+        await ProcessMessage(payload);
+        channel.BasicAck(payload.DeliveryTag, false);
     }
     catch (Exception e)
     {
@@ -45,10 +55,52 @@ eventsConsumer.Received += async (_, payload) =>
         channel.BasicReject(payload.DeliveryTag, false);
     }
 
-    timer.Change(TimeSpan.FromMinutes(1), Timeout.InfiniteTimeSpan);
+    timer.Change(TimeSpan.FromSeconds(10), Timeout.InfiniteTimeSpan);
+
+    currentlyProcessing = false;
 };
 
-Console.WriteLine("Subscribed to queue: test-queue.");
+while (!cancellationTokenSource.IsCancellationRequested || currentlyProcessing) 
+    Thread.Sleep(TimeSpan.FromSeconds(1));
+
+Console.WriteLine($"Closing connection to route: test-key. {DateTime.Now.ToLongTimeString()}");
 
 channel.Close();
-connection.Close();
+queueConnection.Close();
+
+async Task ProcessMessage(BasicDeliverEventArgs payload)
+{
+    var payloadAsString = Encoding.UTF8.GetString(payload.Body.ToArray());
+    Console.WriteLine($"Processing message: {payloadAsString}. {DateTime.Now.ToLongTimeString()}");
+
+    var request = new HttpRequestMessage(HttpMethod.Post, $@"{apiUri}/items/add")
+    {
+        Content = JsonContent.Create(payloadAsString)
+    };
+
+    var httpClient = new HttpClient();
+    var response = await httpClient.SendAsync(request);
+    
+    if (response.StatusCode == HttpStatusCode.OK)
+        Console.WriteLine($"Message successfully processed: {payloadAsString}. {DateTime.Now.ToLongTimeString()}");
+    else
+    {
+        var error = await response.Content.ReadAsStringAsync();
+        AddErrorToDatabase(payloadAsString, error);
+    }
+}
+
+void AddErrorToDatabase(string payload, string error)
+{
+    using var dbConnection = new SqlConnection(connectionString);
+    var command = new SqlCommand($"INSERT INTO dbo.Errors (Payload, Description) Values ({payload},{error});", dbConnection);
+    try
+    {
+        dbConnection.Open();
+        command.ExecuteNonQuery();
+    }
+    catch (Exception e)
+    {
+        Console.WriteLine(e.Message);
+    }
+}

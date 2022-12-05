@@ -1,0 +1,6 @@
+FunnyItem
+CrazyItem
+RemarkableItem
+PrettyItem
+ErrorItem
+TrustworthyItem

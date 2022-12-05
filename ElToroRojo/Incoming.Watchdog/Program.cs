@@ -1,9 +1,11 @@
-﻿using Docker.DotNet;
+﻿using System.Data;
+using Docker.DotNet;
 using Docker.DotNet.Models;
 
 const string workspaceDir = "/workspace";
 
 Console.WriteLine($"Watchdog started. {DateTime.Now.ToShortTimeString()}");
+
 while (true)
 {
     var files = Directory.GetFiles(workspaceDir);
@@ -15,84 +17,15 @@ while (true)
         var dockerEngineUrl = new Uri("unix://var/run/docker.sock");
         using var client = new DockerClientConfiguration(dockerEngineUrl).CreateClient();
 
-        var queueParameters = new CreateContainerParameters
-        {
-            Name = "incoming.queue",
-            Image = "rabbitmq:3.11-management",
-            Hostname = "incoming.queue",
-            ExposedPorts = new Dictionary<string, EmptyStruct>
-            {
-                {"15672", default}
-            },
-            HostConfig = new HostConfig
-            {
-                //AutoRemove = true,
-                PortBindings = new Dictionary<string, IList<PortBinding>>
-                {
-                    {"15672", new List<PortBinding> { new() { HostPort = "15673" } }}
-                },
-                NetworkMode = "eltororojo_incoming-queue-network"
-            },
-            Labels = new Dictionary<string, string>
-            {
-                {"purpose", "queue"},
-                {"case", "queue"},
-                {"apptype", "consoleapp"}
-            }
-        };
-
-        var queueContainer = await client.Containers.CreateContainerAsync(queueParameters);
-
-        await client.Containers.StartContainerAsync(queueContainer.ID, new ContainerStartParameters());
-        Console.WriteLine($"Started queue container with id: {queueContainer.ID}. {DateTime.Now.ToLongTimeString()}");
-
-        await SetupRabbitMq(client, queueContainer.ID);
+        var queueContainerId = await CreateQueue(client);
 
         foreach (var filePath in files)
         {
             var fileName = Path.GetFileName(filePath);
 
-            var consumerParameters = new CreateContainerParameters
-            {
-                Name = $"incoming.consumer-{fileName}",
-                Image = "incoming.consumer:latest",
-                HostConfig = new HostConfig
-                {
-                    //AutoRemove = true,
-                    NetworkMode = "eltororojo_incoming-queue-network"
-                }
-            };
-            
-            var consumerContainer = await client.Containers.CreateContainerAsync(consumerParameters);
-            Console.WriteLine($"Consumer container with id: {consumerContainer.ID}, created for file: {fileName} {DateTime.Now.ToLongTimeString()}");
-
-            await client.Containers.StartContainerAsync(consumerContainer.ID, new ContainerStartParameters());
-            Console.WriteLine($"Started consumer container with id: {consumerContainer.ID} {DateTime.Now.ToLongTimeString()}");
-
-            var producerParameters = new CreateContainerParameters
-            {
-                Name = $"incoming.producer-{fileName}",
-                Image = "incoming.producer:latest",
-                HostConfig = new HostConfig
-                {
-                    //AutoRemove = true,
-                    Binds = new List<string>
-                    {
-                        @"C:\workspace:/workspace:rw"
-                    },
-                    NetworkMode = "eltororojo_incoming-queue-network"
-                },
-                Env = new List<string>
-                {
-                    $"FILE_PATH={filePath}"
-                }
-            };
-
-            var producerContainer = await client.Containers.CreateContainerAsync(producerParameters);
-            Console.WriteLine($"Producer container with id: {producerContainer.ID}, created for file: {fileName} {DateTime.Now.ToLongTimeString()}");
-            
-            await client.Containers.StartContainerAsync(producerContainer.ID, new ContainerStartParameters());
-            Console.WriteLine($"Started producer container with id: {producerContainer.ID} {DateTime.Now.ToLongTimeString()}");
+            await CreateApi(client, fileName);
+            await CreateConsumer(client, fileName);
+            await CreateProducer(client, fileName, filePath);
         }
 
         var listParameters = new ContainersListParameters { All = true };
@@ -116,10 +49,45 @@ while (true)
 
         var stopParameters = new ContainerStopParameters { WaitBeforeKillSeconds = 10 };
 
-        await client.Containers.StopContainerAsync(queueContainer.ID, stopParameters);
+        await client.Containers.StopContainerAsync(queueContainerId, stopParameters);
 
         Console.WriteLine($"Queue container stopped (and automatically removed). {DateTime.Now.ToLongTimeString()}");
     }
+}
+
+async Task<string> CreateQueue(IDockerClient client)
+{
+    var parameters = new CreateContainerParameters
+    {
+        Name = "incoming.queue",
+        Image = "rabbitmq:3.11-management",
+        Hostname = "incoming.queue",
+        ExposedPorts = new Dictionary<string, EmptyStruct>
+        {
+            {"15672", default}
+        },
+        HostConfig = new HostConfig
+        {
+            AutoRemove = true,
+            PortBindings = new Dictionary<string, IList<PortBinding>>
+            {
+                {"15672", new List<PortBinding> { new() { HostPort = "15673" } }}
+            },
+            NetworkMode = "eltororojo_incoming-queue-network"
+        },
+        Labels = new Dictionary<string, string>
+        {
+            {"purpose", "queue"},
+            {"case", "queue"},
+            {"apptype", "consoleapp"}
+        }
+    };
+
+    var containerId = await CreateContainer(client, parameters, "Queue");
+
+    await SetupRabbitMq(client, containerId);
+
+    return containerId;
 }
 
 async Task SetupRabbitMq(IDockerClient client, string containerId)
@@ -173,4 +141,87 @@ async Task ExecCommandInsideContainer(IDockerClient client, string containerId, 
         Console.WriteLine($"Failed execution of '{command}' ({i+1}/{retryCount}). {DateTime.Now.ToLongTimeString()}");
         Thread.Sleep(TimeSpan.FromSeconds(1));
     }
+}
+
+async Task CreateApi(IDockerClient client, string fileName)
+{
+    var parameters = new CreateContainerParameters
+    {
+        Name = $"incoming.api-{fileName}",
+        Image = "incoming.api:latest",
+        HostConfig = new HostConfig
+        {
+            AutoRemove = true
+        },
+        NetworkingConfig = new NetworkingConfig
+        {
+            EndpointsConfig = new Dictionary<string, EndpointSettings>
+            {
+                {"eltororojo_incoming-api-network", new EndpointSettings()},
+                {"eltororojo_itemdb-network", new EndpointSettings()}
+            }
+        }
+    };
+
+    await CreateContainer(client, parameters, "Api", fileName);
+}
+
+async Task CreateConsumer(IDockerClient client, string fileName)
+{
+    var parameters = new CreateContainerParameters
+    {
+        Name = $"incoming.consumer-{fileName}",
+        Image = "incoming.consumer:latest",
+        HostConfig = new HostConfig
+        {
+            AutoRemove = true
+        },
+        NetworkingConfig = new NetworkingConfig
+        {
+            EndpointsConfig = new Dictionary<string, EndpointSettings>
+            {
+                {"eltororojo_incoming-queue-network", new EndpointSettings()},
+                {"eltororojo_incoming-api-network", new EndpointSettings()},
+                {"eltororojo_errordb-network", new EndpointSettings()},
+            }
+        }
+    };
+
+    await CreateContainer(client, parameters, "Consumer", fileName);
+}
+
+async Task CreateProducer(IDockerClient client, string fileName, string filePath)
+{
+    var parameters = new CreateContainerParameters
+    {
+        Name = $"incoming.producer-{fileName}",
+        Image = "incoming.producer:latest",
+        HostConfig = new HostConfig
+        {
+            AutoRemove = true,
+            Binds = new List<string>
+            {
+                @"C:\workspace:/workspace:rw"
+            },
+            NetworkMode = "eltororojo_incoming-queue-network"
+        },
+        Env = new List<string>
+        {
+            $"FILE_PATH={filePath}"
+        }
+    };
+
+    await CreateContainer(client, parameters, "Producer", fileName);
+}
+
+async Task<string> CreateContainer(IDockerClient client, CreateContainerParameters parameters, string containerType, string? fileName = null)
+{
+    var container = await client.Containers.CreateContainerAsync(parameters);
+    
+    Console.WriteLine($"{containerType}({fileName}) container created with id: {container.ID}. {DateTime.Now.ToLongTimeString()}");
+
+    await client.Containers.StartContainerAsync(container.ID, new ContainerStartParameters());
+    Console.WriteLine($"{containerType}({fileName}) container started with id: {container.ID} {DateTime.Now.ToLongTimeString()}");
+
+    return container.ID;
 }

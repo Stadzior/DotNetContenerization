@@ -1,0 +1,6 @@
+ŚmiesznyObjekt
+SzalonyObjekt
+NiezwykłyObjekt
+ŁadnyObjekt
+ErrorObjekt
+GodnyZaufaniaObjekt

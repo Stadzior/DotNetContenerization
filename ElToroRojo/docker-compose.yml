@@ -8,14 +8,26 @@ services:
     networks:
       - incoming-queue-network
       - incoming-api-network
-  # ErrorDatabase:
-  #   image: errordatabase
-  #   container_name: errordatabase
-  # TargetDatabase:
-  #   image: targetdatabase
-  #   container_name: targetdatabase 
+  ErrorDb:
+    image: errordb
+    container_name: errordb
+    ports:
+      - 1434:1433
+    networks:
+      - errordb-network
+  ItemDb:
+    image: itemdb
+    container_name: itemdb
+    ports:
+      - 1435:1433
+    networks:
+      - itemdb-network
 networks:
   incoming-queue-network:
     driver: bridge
   incoming-api-network:
+    driver: bridge
+  errordb-network:
+    driver: bridge
+  itemdb-network:
     driver: bridge
