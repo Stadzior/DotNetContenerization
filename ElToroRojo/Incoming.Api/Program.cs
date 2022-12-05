@@ -1,7 +1,7 @@
 using System.Data.SqlClient;
 using Microsoft.AspNetCore.Mvc;
 
-const string connectionString = "";
+const string connectionString = "data source=itemdb,1433;initial catalog=ItemDb;user id=sa;password=zaq1@WSX;integrated security=false;";
 
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
@@ -24,7 +24,7 @@ app.Run();
 void AddMessageToDatabase(string message)
 {
     using var connection = new SqlConnection(connectionString);
-    var command = new SqlCommand($"INSERT INTO dbo.Items (Content) Values ({message});", connection);
+    var command = new SqlCommand($"INSERT INTO dbo.Items (Content) Values ('{message}');", connection);
     try
     {
         connection.Open();

@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using System.ComponentModel;
+using System.Data;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 
@@ -17,7 +18,7 @@ while (true)
         var dockerEngineUrl = new Uri("unix://var/run/docker.sock");
         using var client = new DockerClientConfiguration(dockerEngineUrl).CreateClient();
 
-        var queueContainerId = await CreateQueue(client);
+        await CreateQueue(client);
 
         foreach (var filePath in files)
         {
@@ -28,34 +29,14 @@ while (true)
             await CreateProducer(client, fileName, filePath);
         }
 
-        var listParameters = new ContainersListParameters { All = true };
-
-        Console.WriteLine($"Waiting for producer/consumer containers to cleanup. {DateTime.Now.ToLongTimeString()}");
-
-        var dynamicContainersExists = true;
-        var dynamicContainersPurposes = new[] { "producer", "consumer", "api" };
-
-        while(dynamicContainersExists)
-        {
-            var containers = await client.Containers.ListContainersAsync(listParameters);
-            dynamicContainersExists = containers
-                .Any(container => dynamicContainersPurposes.Contains(container.Labels["purpose"]));
-
-            if (dynamicContainersExists)
-                Thread.Sleep(TimeSpan.FromSeconds(1));
-        }
-
-        Console.WriteLine($"Removing queue container. {DateTime.Now.ToLongTimeString()}");
-
-        var stopParameters = new ContainerStopParameters { WaitBeforeKillSeconds = 10 };
-
-        await client.Containers.StopContainerAsync(queueContainerId, stopParameters);
-
-        Console.WriteLine($"Queue container stopped (and automatically removed). {DateTime.Now.ToLongTimeString()}");
+        await Cleanup(client, "api", new[] { "consumer" });
+        await Cleanup(client, "queue", new[] { "producer", "consumer" });
     }
+    else
+        Thread.Sleep(TimeSpan.FromSeconds(1));
 }
 
-async Task<string> CreateQueue(IDockerClient client)
+async Task CreateQueue(IDockerClient client)
 {
     var parameters = new CreateContainerParameters
     {
@@ -86,8 +67,6 @@ async Task<string> CreateQueue(IDockerClient client)
     var containerId = await CreateContainer(client, parameters, "Queue");
 
     await SetupRabbitMq(client, containerId);
-
-    return containerId;
 }
 
 async Task SetupRabbitMq(IDockerClient client, string containerId)
@@ -149,21 +128,17 @@ async Task CreateApi(IDockerClient client, string fileName)
     {
         Name = $"incoming.api-{fileName}",
         Image = "incoming.api:latest",
+        Hostname = $"incoming.api-{fileName}",
         HostConfig = new HostConfig
         {
-            AutoRemove = true
-        },
-        NetworkingConfig = new NetworkingConfig
-        {
-            EndpointsConfig = new Dictionary<string, EndpointSettings>
-            {
-                {"eltororojo_incoming-api-network", new EndpointSettings()},
-                {"eltororojo_itemdb-network", new EndpointSettings()}
-            }
+            AutoRemove = true,
+            NetworkMode = "eltororojo_incoming-api-network"
         }
     };
 
-    await CreateContainer(client, parameters, "Api", fileName);
+    var containerId = await CreateContainer(client, parameters, "Api", fileName);
+
+    await ConnectToNetwork(client, containerId, "eltororojo_itemdb-network");
 }
 
 async Task CreateConsumer(IDockerClient client, string fileName)
@@ -172,22 +147,22 @@ async Task CreateConsumer(IDockerClient client, string fileName)
     {
         Name = $"incoming.consumer-{fileName}",
         Image = "incoming.consumer:latest",
+        Hostname = $"incoming.consumer-{fileName}",
         HostConfig = new HostConfig
-        {
-            AutoRemove = true
+        { 
+            AutoRemove = true,
+            NetworkMode = "eltororojo_incoming-queue-network"
         },
-        NetworkingConfig = new NetworkingConfig
+        Env = new List<string>
         {
-            EndpointsConfig = new Dictionary<string, EndpointSettings>
-            {
-                {"eltororojo_incoming-queue-network", new EndpointSettings()},
-                {"eltororojo_incoming-api-network", new EndpointSettings()},
-                {"eltororojo_errordb-network", new EndpointSettings()},
-            }
+            $"FILE_NAME={fileName}"
         }
     };
 
-    await CreateContainer(client, parameters, "Consumer", fileName);
+    var containerId = await CreateContainer(client, parameters, "Consumer", fileName);
+
+    await ConnectToNetwork(client, containerId, "eltororojo_incoming-api-network");
+    await ConnectToNetwork(client, containerId, "eltororojo_errordb-network");
 }
 
 async Task CreateProducer(IDockerClient client, string fileName, string filePath)
@@ -196,6 +171,7 @@ async Task CreateProducer(IDockerClient client, string fileName, string filePath
     {
         Name = $"incoming.producer-{fileName}",
         Image = "incoming.producer:latest",
+        Hostname = $"incoming.producer-{fileName}",
         HostConfig = new HostConfig
         {
             AutoRemove = true,
@@ -224,4 +200,49 @@ async Task<string> CreateContainer(IDockerClient client, CreateContainerParamete
     Console.WriteLine($"{containerType}({fileName}) container started with id: {container.ID} {DateTime.Now.ToLongTimeString()}");
 
     return container.ID;
+}
+
+async Task ConnectToNetwork(IDockerClient client, string containerId, string networkName)
+{
+    var parameters = new NetworkConnectParameters
+    {
+        Container = containerId
+    };
+
+    await client.Networks.ConnectNetworkAsync(networkName, parameters);
+    Console.WriteLine($"Connected container {containerId} to network: {networkName} {DateTime.Now.ToLongTimeString()}");
+}
+
+async Task Cleanup(IDockerClient client, string targetPurpose, ICollection<string> dependentPurposes)
+{
+    var listParameters = new ContainersListParameters { All = true };
+
+    Console.WriteLine($"Waiting for dependent ({string.Join(", ", dependentPurposes)}) containers to be removed. {DateTime.Now.ToLongTimeString()}");
+
+    var dependentContainersExists = true;
+
+    while (dependentContainersExists)
+    {
+        var dependentContainers = await client.Containers.ListContainersAsync(listParameters);
+        dependentContainersExists = dependentContainers
+            .Any(container => dependentPurposes.Contains(container.Labels["purpose"]));
+
+        if (dependentContainersExists)
+            Thread.Sleep(TimeSpan.FromSeconds(1));
+    }
+
+    Console.WriteLine($"Removing {targetPurpose} containers. {DateTime.Now.ToLongTimeString()}");
+
+    var stopParameters = new ContainerStopParameters { WaitBeforeKillSeconds = 10 };
+
+    var targetContainers = await client.Containers.ListContainersAsync(listParameters);
+    var targetContainerIds = targetContainers
+        .Where(container => container.Labels["purpose"].Equals(targetPurpose))
+        .Select(container => container.ID);
+
+    foreach (var targetContainerId in targetContainerIds)
+    {
+        await client.Containers.StopContainerAsync(targetContainerId, stopParameters);
+        Console.WriteLine($"Stopped (and automatically removed) {targetPurpose} container: {targetContainerId}. {DateTime.Now.ToLongTimeString()}");
+    }
 }

@@ -9,9 +9,9 @@ using System.Threading.Tasks;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
-while (true) {}
-const string apiUri = "http://localhost:5001";
-const string connectionString = "data source=localhost,1433;initial catalog=ErrorDb;integrated security=false;MultipleActiveResultSets=True;";
+var fileName = args[0];
+var apiUri = $"http://incoming.api-{fileName}:80";
+const string connectionString = "data source=errordb,1433;initial catalog=ErrorDb;user id=sa;password=zaq1@WSX;integrated security=false;";
 using var cancellationTokenSource = new CancellationTokenSource();
 
 using var timer = new Timer(_ =>
@@ -81,7 +81,7 @@ async Task ProcessMessage(BasicDeliverEventArgs payload)
     var httpClient = new HttpClient();
     var response = await httpClient.SendAsync(request);
     
-    if (response.StatusCode == HttpStatusCode.OK)
+    if (response.StatusCode == HttpStatusCode.Created)
         Console.WriteLine($"Message successfully processed: {payloadAsString}. {DateTime.Now.ToLongTimeString()}");
     else
     {
@@ -93,7 +93,7 @@ async Task ProcessMessage(BasicDeliverEventArgs payload)
 void AddErrorToDatabase(string payload, string error)
 {
     using var dbConnection = new SqlConnection(connectionString);
-    var command = new SqlCommand($"INSERT INTO dbo.Errors (Payload, Description) Values ({payload},{error});", dbConnection);
+    var command = new SqlCommand($"INSERT INTO dbo.Errors (Payload, Description) Values ('{payload}','{error}');", dbConnection);
     try
     {
         dbConnection.Open();
