@@ -129,9 +129,17 @@ async Task CreateApi(IDockerClient client, string fileName)
         Name = $"incoming.api-{fileName}",
         Image = "incoming.api:latest",
         Hostname = $"incoming.api-{fileName}",
+        ExposedPorts = new Dictionary<string, EmptyStruct>
+        {
+            {"5001", default}
+        },
         HostConfig = new HostConfig
         {
             AutoRemove = true,
+            PortBindings = new Dictionary<string, IList<PortBinding>>
+            {
+                {"80", new List<PortBinding> { new() { HostPort = "5001" } }}
+            },
             NetworkMode = "eltororojo_incoming-api-network"
         }
     };

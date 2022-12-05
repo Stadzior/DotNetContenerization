@@ -1,0 +1,6 @@
+LustigerArtikel
+VerrückterArtikel
+BerkenswerterArtikel
+HübscherArtikel
+ErrorArtikel
+VertrauenswürdigArtikel

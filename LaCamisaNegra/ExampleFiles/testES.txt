@@ -1,0 +1,6 @@
+ElObjetoDivertido
+ElObjetoLoco
+ElObjetoNotable
+ElObjetoGuapo
+ElObjetoDeError
+ElObjetoDeConfianza
