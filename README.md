@@ -251,5 +251,5 @@ docker exec rabbitmq rabbitmqadmin declare binding source=test-exchange destinat
 # ElToroRojo:smiling_imp::
 All in slim linux containers, dynamically created on demand.
 
-# LaCamisaNegra:black_shirt::
+# LaCamisaNegra:shirt::
 All in slim windows nano containers run as windows services.
