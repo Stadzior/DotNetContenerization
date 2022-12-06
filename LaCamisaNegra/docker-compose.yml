@@ -1,28 +1,32 @@
 services:
-  Incoming.Queue:
+  incoming.queue:
     image: rabbitmq:3.11-management
+    platform: linux
     container_name: incoming.queue
     hostname: incoming.queue
     networks:
       - incoming-queue-network
-  ErrorDb:
-    image: errordb
+  errordb:
+    build: ./ErrorDb
+    platform: linux
     container_name: errordb
     ports:
       - 1434:1433
     networks:
       - errordb-network
-  ItemDb:
-    image: itemdb
+  itemdb:
+    build: ./ItemDb
+    platform: linux
     container_name: itemdb
     ports:
       - 1435:1433
     networks:
       - itemdb-network
-  Incoming.Api:
+  incoming.api:
     depends_on:
-      - ItemDb
+      - itemdb
     build: ./Incoming.Api
+    platform: windows
     container_name: incoming.api
     hostname: incoming.api
     ports:
@@ -30,22 +34,24 @@ services:
     networks:
       - incoming-api-network
       - itemdb-network
-  Incoming.Consumer:
+  incoming.consumer:
     depends_on:
-      - Incoming.Api
-      - ErrorDb
-      - Incoming.Queue
+      - incoming.api
+      - errordb
+      - incoming.queue
     build: ./Incoming.Consumer
+    platform: windows
     container_name: incoming.consumer
     hostname: incoming.consumer
     networks:
       - incoming-queue-network
       - incoming-api-network
       - errordb-network
-  Incoming.Producer:
+  incoming.producer:
     depends_on:
-      - Incoming.Queue
+      - incoming.queue
     build: ./Incoming.Producer
+    platform: windows
     container_name: incoming.producer
     hostname: incoming.producer
     volumes:

@@ -9,6 +9,7 @@ Console.WriteLine($"Processing file: {filePath}. {DateTime.Now.ToLongTimeString(
 if (File.Exists(filePath))
 {
     var rows = File.ReadAllLines(filePath);
+    var fileName = Path.GetFileName(filePath);
 
     var connectionFactory = new ConnectionFactory
     {
@@ -22,15 +23,15 @@ if (File.Exists(filePath))
 
     using var connection = connectionFactory.CreateConnection();
     using var channel = connection.CreateModel();
-    Console.WriteLine($"Connected to route: test-key. {DateTime.Now.ToLongTimeString()}");
+    Console.WriteLine($"Connected to route: {fileName}-key. {DateTime.Now.ToLongTimeString()}");
 
     var properties = channel.CreateBasicProperties();
     properties.Persistent = true;
 
     foreach (var row in rows)
     {
-        channel.BasicPublish("test-exchange", "test-key", true, properties, Encoding.UTF8.GetBytes(row));
-        Console.WriteLine($"Sending message: {row}, from file: {filePath}, to route: test-key. {DateTime.Now.ToLongTimeString()}");
+        channel.BasicPublish($"{fileName}-exchange", $"{fileName}-key", true, properties, Encoding.UTF8.GetBytes(row));
+        Console.WriteLine($"Sending message: {row}, from file: {filePath}, to route: {fileName}-key. {DateTime.Now.ToLongTimeString()}");
     }
 
     File.Delete(filePath);

@@ -252,4 +252,10 @@ docker exec rabbitmq rabbitmqadmin declare binding source=test-exchange destinat
 All in slim linux containers, dynamically created on demand.
 
 # LaCamisaNegra:shirt::
-All in slim windows nano containers run as windows services.
+Producers, Consumers & Apis all in slim windows nano containers run as windows services where db and queue in slim linux containers.
+
+# LaVidaLoca:sunglasses::
+Producers, Consumers & Apis all in slim windows nano containers run as windows services.
+
+# UnaPalomaBlanca:sunglasses::
+Same as LaVidaLoca but apis are on separate docker deamon.

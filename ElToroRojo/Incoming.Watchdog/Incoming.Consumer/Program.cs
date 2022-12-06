@@ -32,12 +32,12 @@ var connectionFactory = new ConnectionFactory
 
 using var queueConnection = connectionFactory.CreateConnection();
 using var channel = queueConnection.CreateModel();
-Console.WriteLine($"Connected to route: test-key. {DateTime.Now.ToLongTimeString()}");
+Console.WriteLine($"Connected to incoming.queue. {DateTime.Now.ToLongTimeString()}");
 
 channel.BasicQos(0, 1, false);
 var eventsConsumer = new AsyncEventingBasicConsumer(channel);
-channel.BasicConsume("test-queue", false, eventsConsumer);
-Console.WriteLine($"Subscribed to queue: test-queue. {DateTime.Now.ToLongTimeString()}");
+channel.BasicConsume($"{fileName}-queue", false, eventsConsumer);
+Console.WriteLine($"Subscribed to queue: {fileName}-queue. {DateTime.Now.ToLongTimeString()}");
 
 var currentlyProcessing = false;
 
@@ -63,7 +63,7 @@ eventsConsumer.Received += async (_, payload) =>
 while (!cancellationTokenSource.IsCancellationRequested || currentlyProcessing) 
     Thread.Sleep(TimeSpan.FromSeconds(1));
 
-Console.WriteLine($"Closing connection to route: test-key. {DateTime.Now.ToLongTimeString()}");
+Console.WriteLine($"Closing connection to incoming.queue. {DateTime.Now.ToLongTimeString()}");
 
 channel.Close();
 queueConnection.Close();

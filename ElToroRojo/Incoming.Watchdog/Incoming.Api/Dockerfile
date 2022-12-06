@@ -20,7 +20,7 @@ FROM mcr.microsoft.com/dotnet/runtime-deps:6.0.11-alpine3.16-amd64
 
 LABEL purpose=api
 LABEL case=queue
-LABEL apptype=consoleapp
+LABEL apptype=api
 
 WORKDIR /app
 COPY --from=build /app .

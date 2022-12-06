@@ -1,5 +1,6 @@
 services:
-  Incoming.Watchdog:
+  incoming.watchdog:
+    build: ./Incoming.Watchdog
     image: incoming.watchdog
     container_name: incoming.watchdog
     volumes:
@@ -8,14 +9,16 @@ services:
     networks:
       - incoming-queue-network
       - incoming-api-network
-  ErrorDb:
+  errordb:
+    build: ./ErrorDb
     image: errordb
     container_name: errordb
     ports:
       - 1434:1433
     networks:
       - errordb-network
-  ItemDb:
+  itemdb:
+    build: ./ItemDb
     image: itemdb
     container_name: itemdb
     ports:

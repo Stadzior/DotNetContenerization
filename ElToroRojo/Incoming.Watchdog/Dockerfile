@@ -9,11 +9,11 @@ LABEL apptype=consoleapp
 WORKDIR /source
 
 # copy csproj and restore as distinct layers
-COPY *.csproj .
+COPY Incoming.Watchdog.csproj .
 RUN dotnet restore -r linux-musl-x64 /p:PublishReadyToRun=true
 
 # copy and publish app and libraries
-COPY . .
+COPY Incoming.Watchdog.csproj Program.cs ./
 RUN dotnet publish -c Release -o /app -r linux-musl-x64 --self-contained true --no-restore /p:PublishTrimmed=true /p:PublishReadyToRun=true /p:PublishSingleFile=true
 
 # final stage/image
@@ -25,6 +25,17 @@ LABEL apptype=consoleapp
 
 WORKDIR /app
 COPY --from=build /app .
+
+WORKDIR /builds/Incoming.Producer
+COPY Incoming.Producer .
+
+WORKDIR /builds/Incoming.Consumer
+COPY Incoming.Consumer .
+
+WORKDIR /builds/Incoming.Api
+COPY Incoming.Api .
+
+WORKDIR /app
 
 RUN apk add docker openrc
 ENTRYPOINT ["./Incoming.Watchdog"]
