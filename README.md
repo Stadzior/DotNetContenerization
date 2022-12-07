@@ -257,5 +257,5 @@ Producers, Consumers & Apis all in slim windows nano containers run as windows s
 # LaVidaLoca:sunglasses::
 Producers, Consumers & Apis all in slim windows nano containers run as windows services.
 
-# UnaPalomaBlanca:sunglasses::
+# UnaPalomaBlanca:dove::
 Same as LaVidaLoca but apis are on separate docker deamon.
