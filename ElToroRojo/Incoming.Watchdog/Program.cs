@@ -284,9 +284,11 @@ async Task PullImage(IDockerClient client, string imageName)
     {
         Console.WriteLine($"Image named '{imageName}' not found. Pulling image. {DateTime.Now.ToLongTimeString()}");
 
+        var imageAndTag = imageName.Split(':');
         var imagesCreateParameters = new ImagesCreateParameters
         {
-            FromImage = imageName
+            FromImage = imageAndTag.ElementAt(0),
+            Tag = imageAndTag.ElementAt(1)
         };
 
         var progress = new Progress<JSONMessage>();
@@ -331,9 +333,8 @@ async Task BuildImage(IDockerClient client, string imageName, string dockerFileP
             Console.WriteLine($"Error: {e.ErrorMessage}");
         };
 
-        var stream = CreateTarFileForDockerfileDirectory(dockerFilePath);
-
-        await client.Images.BuildImageFromDockerfileAsync(imageBuildParameters, stream, new AuthConfig[]{}, new Dictionary<string, string>(), progress);
+        await using var stream = CreateTarFileForDockerfileDirectory(dockerFilePath);
+        await client.Images.BuildImageFromDockerfileAsync(imageBuildParameters, stream, null, null, progress);
 
         Console.WriteLine($"Image named '{imageName}' built. {DateTime.Now.ToLongTimeString()}");
     }
@@ -359,7 +360,7 @@ Stream CreateTarFileForDockerfileDirectory(string directory)
     //Add files to tar archive
     foreach (var file in filePaths)
     {
-        var tarName = Path.GetFileNameWithoutExtension(file);
+        var tarName = Path.GetFileName(file);
         
         var entry = TarEntry.CreateTarEntry(tarName);
         using var fileStream = File.OpenRead(file);
