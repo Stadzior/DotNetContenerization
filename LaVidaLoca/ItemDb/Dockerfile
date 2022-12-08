@@ -1,7 +1,7 @@
 FROM mcr.microsoft.com/mssql/server:2022-latest
 
 LABEL purpose=workshops
-LABEL case=queue
+LABEL case=stats
 LABEL apptype=MSSQL
 
 ENV \
