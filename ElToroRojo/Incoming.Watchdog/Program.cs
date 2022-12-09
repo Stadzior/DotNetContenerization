@@ -41,14 +41,15 @@ while (true)
 
 async Task CreateQueue(IDockerClient client, ICollection<string> fileNames)
 {
-    const string imageName = "rabbitmq:3.11-management";
+    const string imageName = "rabbitmq";
+    const string imageTag = "3.11-management";
 
-    await PullImage(client, imageName);
+    await PullImage(client, imageName, imageTag);
 
     var parameters = new CreateContainerParameters
     {
         Name = "incoming.queue",
-        Image = imageName,
+        Image = $"{imageName}:{imageTag}",
         Hostname = "incoming.queue",
         ExposedPorts = new Dictionary<string, EmptyStruct>
         {
@@ -277,18 +278,17 @@ async Task Cleanup(IDockerClient client, string targetPurpose, ICollection<strin
     }
 }
 
-async Task PullImage(IDockerClient client, string imageName)
+async Task PullImage(IDockerClient client, string imageName, string imageTag = "latest")
 {
-    var imageAlreadyExists = await ImageAlreadyExists(client, imageName);
+    var imageAlreadyExists = await ImageAlreadyExists(client, imageName, imageTag);
     if (!imageAlreadyExists)
     {
-        Console.WriteLine($"Image named '{imageName}' not found. Pulling image. {DateTime.Now.ToLongTimeString()}");
+        Console.WriteLine($"Image named '{imageName}:{imageTag}' not found. Pulling image. {DateTime.Now.ToLongTimeString()}");
 
-        var imageAndTag = imageName.Split(':');
         var imagesCreateParameters = new ImagesCreateParameters
         {
-            FromImage = imageAndTag.ElementAt(0),
-            Tag = imageAndTag.ElementAt(1)
+            FromImage = imageName,
+            Tag = imageTag
         };
 
         var progress = new Progress<JSONMessage>();
@@ -319,7 +319,7 @@ async Task BuildImage(IDockerClient client, string imageName, string dockerFileP
 
         var imageBuildParameters = new ImageBuildParameters
         {
-            Dockerfile = dockerFilePath
+            Tags = new List<string> { imageName }
         };
 
         var progress = new Progress<JSONMessage>();
@@ -340,11 +340,11 @@ async Task BuildImage(IDockerClient client, string imageName, string dockerFileP
     }
 }
 
-async Task<bool> ImageAlreadyExists(IDockerClient client, string imageName)
+async Task<bool> ImageAlreadyExists(IDockerClient client, string imageName, string imageTag = "latest")
 {
     var listImagesParameters = new ImagesListParameters { All = true };
     var images = await client.Images.ListImagesAsync(listImagesParameters);
-    return images.Any(image => image.RepoTags.Contains(imageName));
+    return images.Any(image => image.RepoTags.Contains($"{imageName}:{imageTag}"));
 }
 
 Stream CreateTarFileForDockerfileDirectory(string directory)

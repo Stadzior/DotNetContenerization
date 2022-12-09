@@ -249,27 +249,17 @@ docker exec rabbitmq rabbitmqadmin declare binding source=test-exchange destinat
 All in slim linux containers, dynamically created on demand.
 
 # LaCamisaNegra:shirt::
-~~Producers, Consumers & Apis all in slim windows nano containers run as windows services where db and queue in slim linux containers.~~
-Does not work out as expected. It works however without explicit network and docker-compose:
+Producers, Consumers & Apis all in slim windows nano containers run as windows services where db and queue in slim linux containers.
+Does not work out as expected. It works however without explicit network and common docker-compose for both platforms.
+Quickstart:
 Switch to linux containers in your docker desktop then run:
 ```
-cd [PATH_TO_REPO]/LaCamisaNegra/ItemDb
-docker image build -t itemdb -f Dockerfile .
-docker container run -d -p 1434:1433 --name itemdb itemdb
+cd [PATH_TO_REPO]/LaCamisaNegra
+docker compose -f docker-compose-linux.yml up
 ```
 Switch to windows containers and then run:
 ```
-cd [PATH_TO_REPO]/LaCamisaNegra/Incoming.Consumer
-docker image build -t incoming.consumer -f Dockerfile .
-docker container run -d --name incoming.consumer incoming.consumer
-```
-Look into the db. An app running in windows container should successfully insert rows into db running in linux container:
-```
-Server type: Database Engine
-Server name: localhost, 1434
-Authentication: SQL Server Authentication
-Login: sa
-Password: zaq1@WSX
+docker compose -f docker-compose-windows.yml up
 ```
 
 # LosOjosAzules:eyes::

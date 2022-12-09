@@ -17,7 +17,7 @@ using var cancellationTokenSource = new CancellationTokenSource();
 using var timer = new Timer(_ =>
 {
     cancellationTokenSource.Cancel();
-}, null, TimeSpan.FromSeconds(10), Timeout.InfiniteTimeSpan);
+}, null, TimeSpan.FromMinutes(10), Timeout.InfiniteTimeSpan);
 
 var connectionFactory = new ConnectionFactory
 {
@@ -55,7 +55,7 @@ eventsConsumer.Received += async (_, payload) =>
         channel.BasicReject(payload.DeliveryTag, false);
     }
 
-    timer.Change(TimeSpan.FromSeconds(10), Timeout.InfiniteTimeSpan);
+    timer.Change( TimeSpan.FromSeconds(10), Timeout.InfiniteTimeSpan);
 
     currentlyProcessing = false;
 };

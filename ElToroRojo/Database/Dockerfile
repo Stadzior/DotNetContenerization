@@ -15,6 +15,5 @@ WORKDIR /usr/setup
 
 # Bundle config source
 COPY . .
-
 EXPOSE 1433
-ENTRYPOINT ["./entrypoint.sh"]
+ENTRYPOINT ./entrypoint ${SEED}
