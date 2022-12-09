@@ -7,6 +7,10 @@ LABEL case=lacamisanegra
 
 WORKDIR /source
 
+ENV \
+    # Ensure we listen on any IP Address 
+    DOTNET_URLS=http://+:80
+    
 # copy csproj and restore as distinct layers
 COPY *.csproj .
 RUN dotnet restore -r win-x64 /p:PublishReadyToRun=true
@@ -18,9 +22,9 @@ RUN dotnet publish -c Release -o /app -r win-x64 --self-contained true --no-rest
 # final stage/image
 FROM mcr.microsoft.com/dotnet/aspnet:6.0.10-nanoserver-1809
 
-LABEL purpose=consumer
+LABEL purpose=api
 LABEL case=lacamisanegra
-LABEL apptype=consoleapp
+LABEL apptype=api
 
 WORKDIR /app
 COPY --from=build /app .
@@ -28,4 +32,4 @@ COPY --from=build /app .
 # Enable detection of running in a container
 ENV DOTNET_RUNNING_IN_CONTAINER=true
 
-ENTRYPOINT ["incoming.Consumer.exe"]
+ENTRYPOINT ["Incoming.Api.exe"]

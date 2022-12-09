@@ -49,7 +49,7 @@ services:
     container_name: incoming.producer
     hostname: incoming.producer
     volumes:
-      - C:\workspace:C:\workspace:ro
+      - C:\workspace:C:\workspace:rw
     networks:
       - incoming-queue-network
 networks:

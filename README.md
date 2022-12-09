@@ -249,17 +249,23 @@ docker exec rabbitmq rabbitmqadmin declare binding source=test-exchange destinat
 All in slim linux containers, dynamically created on demand.
 
 # LaCamisaNegra:shirt::
-Producers, Consumers & Apis all in slim windows nano containers run as windows services where db and queue in slim linux containers.
+Producers, Consumers & Apis all in slim windows nano containers run as console apps where dbs and queue are in slim linux containers.
 Does not work out as expected. It works however without explicit network and common docker-compose for both platforms.
 Quickstart:
 Switch to linux containers in your docker desktop then run:
 ```
 cd [PATH_TO_REPO]/LaCamisaNegra
-docker compose -f docker-compose-linux.yml up
+docker compose -f docker-compose-linux.yml up -d
+docker exec incoming.queue rabbitmqadmin declare exchange name=incoming-exchange type=direct
+docker exec incoming.queue rabbitmqadmin declare queue name=incoming-queue durable=false
+docker exec incoming.queue rabbitmqadmin declare binding source=incoming-exchange destination_type=queue destination=incoming-queue routing_key=incoming-key
+docker exec incoming.queue rabbitmqctl add_user admin admin
+docker exec incoming.queue rabbitmqctl set_user_tags admin administrator
+docker exec incoming.queue rabbitmqctl set_permissions -p / admin .* .* .*
 ```
 Switch to windows containers and then run:
 ```
-docker compose -f docker-compose-windows.yml up
+docker compose -f docker-compose-windows.yml up -d
 ```
 
 # LosOjosAzules:eyes::

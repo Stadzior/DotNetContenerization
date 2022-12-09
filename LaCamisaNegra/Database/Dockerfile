@@ -1,7 +1,7 @@
 FROM mcr.microsoft.com/mssql/server:2022-latest
 
-LABEL purpose=workshops
-LABEL case=queue
+LABEL purpose=db
+LABEL case=lacamisanegra
 LABEL apptype=MSSQL
 
 ENV \
@@ -15,6 +15,5 @@ WORKDIR /usr/setup
 
 # Bundle config source
 COPY . .
-
 EXPOSE 1433
-ENTRYPOINT ["./entrypoint.sh"]
+ENTRYPOINT ./entrypoint ${SEED}

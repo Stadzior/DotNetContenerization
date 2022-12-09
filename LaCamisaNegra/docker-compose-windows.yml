@@ -1,0 +1,19 @@
+services:
+  incoming.api:
+    build: ./Incoming.Api
+    image: incoming.api
+    container_name: incoming.api
+    ports:
+      - 5001:80
+  incoming.consumer:
+    build: ./Incoming.Consumer
+    image: incoming.consumer
+    container_name: incoming.consumer    
+    depends_on:
+      - incoming.api
+  incoming.producer:
+    build: ./Incoming.Producer
+    image: incoming.producer
+    container_name: incoming.producer
+    volumes:
+      - C:\workspace:C:\workspace:rw

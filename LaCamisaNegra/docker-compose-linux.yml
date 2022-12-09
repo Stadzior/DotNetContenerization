@@ -1,0 +1,23 @@
+services:
+  errordb:
+    build: ./Database
+    image: database
+    container_name: errordb
+    environment:
+      - SEED=seed_errors.sql
+    ports:
+      - 1434:1433
+  itemdb:
+    build: ./Database
+    image: database
+    container_name: itemdb
+    environment:
+      - SEED=seed_items.sql
+    ports:
+      - 1435:1433
+  incoming.queue:
+    image: rabbitmq:3.11-management
+    container_name: incoming.queue
+    ports:
+      - 15673:15672
+      - 5673:5672
