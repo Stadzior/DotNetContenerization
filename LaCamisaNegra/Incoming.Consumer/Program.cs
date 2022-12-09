@@ -2,12 +2,13 @@
 using System.Data.SqlClient;
 using System.Threading;
 
-const string connectionString = "data source=itemdb,1434;initial catalog=ItemDb;user id=sa;password=zaq1@WSX;integrated security=false;";
-
+var connectionString = @"data source=host.docker.internal,1434;initial catalog=ItemDb;user id=sa;password=zaq1@WSX;integrated security=false;";
+Console.WriteLine(connectionString);
 while (true)
 {
-    AddMessageToDatabase($"Heheszki {DateTime.Now.ToLongTimeString()}");
-    Console.WriteLine("LOL");
+    var message = $"Item added at: {DateTime.Now.ToLongTimeString()}";
+    AddMessageToDatabase(message);
+    Console.WriteLine(message);
     Thread.Sleep(TimeSpan.FromSeconds(5));
 }
 

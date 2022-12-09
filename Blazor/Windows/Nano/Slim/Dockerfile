@@ -8,9 +8,13 @@ LABEL apptype=Blazor
 
 WORKDIR /source
     
+# copy csproj and restore as distinct layers
+COPY *.csproj .
+RUN dotnet restore -r win-x64 /p:PublishReadyToRun=true
+
 # copy and publish app and libraries
 COPY . .
-RUN dotnet publish -c Release -o /app --self-contained /p:PublishTrimmed=true
+RUN dotnet publish -c Release -o /app -r win-x64 --self-contained true --no-restore /p:PublishTrimmed=true /p:PublishReadyToRun=true
 
 # final stage/image
 FROM mcr.microsoft.com/dotnet/aspnet:6.0.10-nanoserver-1809
@@ -24,10 +28,9 @@ LABEL case=stats
 LABEL apptype=Blazor
 
 WORKDIR /app
-COPY --from=build /app/wwwroot .
-#config file COPY nginx.conf /etc/nginx/nginx.conf
+COPY --from=build /source/bin/Release/net6.0 .
 
 # Enable detection of running in a container
 ENV DOTNET_RUNNING_IN_CONTAINER=true
 
-#ENTRYPOINT ["Blazor"]
+ENTRYPOINT ["Blazor.exe"]

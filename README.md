@@ -147,7 +147,6 @@ docker container run -d -p 5001:5000 --name core-dotnet-minimalapi-3 core-dotnet
 ```
 
 # Windows Service
-
 - Alpine linux with dotnet & powershell:
 ```
 cd [PATH_TO_REPO]/WindowsService/Linux/Alpine/DotNetAndPowerShell
@@ -207,7 +206,6 @@ docker container run -d --name core-dotnet-windowsservice-3 core-dotnet-windowss
 ```
 
 # Blazor
-
 - Alpine linux slim:
 ```
 cd [PATH_TO_REPO]/Blazor/Linux/Alpine/Slim
@@ -222,7 +220,6 @@ docker container run -d --name nano-dotnet-blazor-3 nano-dotnet-blazor:3
 ```
 
 # MSSQL:
-
 - Ubuntu-based image (only available at this time):
 ```
 cd [PATH_TO_REPO]/MSSQL/Linux/Ubuntu
@@ -274,6 +271,9 @@ Authentication: SQL Server Authentication
 Login: sa
 Password: zaq1@WSX
 ```
+
+# LosOjosAzules:eyes::
+Producers, Consumers & Apis all in slim windows nano containers run as console apps.
 
 # LaVidaLoca:sunglasses::
 Producers, Consumers & Apis all in slim windows nano containers run as windows services.

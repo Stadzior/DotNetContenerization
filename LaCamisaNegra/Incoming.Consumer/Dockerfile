@@ -29,4 +29,4 @@ COPY --from=build /app .
 # Enable detection of running in a container
 ENV DOTNET_RUNNING_IN_CONTAINER=true
 
-ENTRYPOINT ["Incoming.Consumer"]
+ENTRYPOINT ["Incoming.Consumer.exe"]
