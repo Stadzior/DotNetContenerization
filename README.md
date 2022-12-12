@@ -252,6 +252,7 @@ All in slim linux containers, dynamically created on demand.
 Producers, Consumers & Apis all in slim windows nano containers run as console apps where dbs and queue are in slim linux containers.
 Does not work out as expected. It works however without explicit network and common docker-compose for both platforms.
 Quickstart:
+
 Switch to linux containers in your docker desktop then run:
 ```
 cd [PATH_TO_REPO]/LaCamisaNegra
@@ -267,12 +268,3 @@ Switch to windows containers and then run:
 ```
 docker compose -f docker-compose-windows.yml up -d
 ```
-
-# LosOjosAzules:eyes::
-Producers, Consumers & Apis all in slim windows nano containers run as console apps.
-
-# LaVidaLoca:sunglasses::
-Producers, Consumers & Apis all in slim windows nano containers run as windows services.
-
-# UnaPalomaBlanca:dove::
-Same as LaVidaLoca but apis are on separate docker deamon.
