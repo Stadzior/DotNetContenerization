@@ -257,6 +257,9 @@ Switch to linux containers in your docker desktop then run:
 ```
 cd [PATH_TO_REPO]/LaCamisaNegra
 docker compose -f docker-compose-linux.yml up -d
+```
+Wait few seconds (~10) for rabbitmq to start.
+```
 docker exec incoming.queue rabbitmqadmin declare exchange name=incoming-exchange type=direct
 docker exec incoming.queue rabbitmqadmin declare queue name=incoming-queue durable=false
 docker exec incoming.queue rabbitmqadmin declare binding source=incoming-exchange destination_type=queue destination=incoming-queue routing_key=incoming-key
