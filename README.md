@@ -251,6 +251,7 @@ All in slim linux containers, dynamically created on demand.
 # LaCamisaNegra:shirt::
 Producers, Consumers & Apis all in slim windows nano containers run as console apps where dbs and queue are in slim linux containers.
 Does not work out as expected. It works however without explicit network and common docker-compose for both platforms.
+
 Quickstart:
 
 Switch to linux containers in your docker desktop then run:
@@ -270,4 +271,23 @@ docker exec incoming.queue rabbitmqctl set_permissions -p / admin .* .* .*
 Switch to windows containers and then run:
 ```
 docker compose -f docker-compose-windows.yml up -d
+```
+
+# La Vida Loca:sunglasses::
+All in nano windows containers (unfinished).
+
+# LosGemelos:fist_right::fist_left::
+ConsoleApp with both .NET6 & .NET4.8 elements.
+
+For linux (on linux deamon):
+```
+cd [PATH_TO_REPO]/LosGemelos
+docker image build -t losgemelos -f Dockerfile-Linux .
+docker container run -d --name losgemelos losgemelos
+```
+For windows (on windows deamon):
+```
+cd [PATH_TO_REPO]/LosGemelos
+docker image build -t losgemelos -f Dockerfile-Windows .
+docker container run -d --name losgemelos losgemelos
 ```
